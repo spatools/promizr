@@ -76,15 +76,16 @@ module.exports = function (grunt) {
                 }
             },
             polyfill: {
-                options: {
-                    //require: [["./polyfill/class.ts", { expose: "./test" }]]
-                    //require: ["./polyfill/class.ts"]
-                },
                 files: {
-                    "dist/polyfill.js": ["<%= paths.polyfill %>/polyfill.ts"]
-                    //src: [],
-                    //dest: "dist/polyfill.js"
+                    "<%= paths.build %>/polyfill.js": ["<%= paths.polyfill %>/polyfill.ts"]
                 }
+            }
+        },
+
+        copy: {
+            polyfill: {
+                src: "<%= paths.polyfill %>/promise.d.ts",
+                dest: "<%= paths.build %>/promise.d.ts"
             }
         },
 
@@ -118,16 +119,6 @@ module.exports = function (grunt) {
             }
         },
 
-        connect: {
-            test: {
-                options: {
-                    port: "8080",
-                    open: "http://localhost:8080/tests/index.html",
-                    keepalive: true
-                }
-            }
-        },
-
         mocha: {
             test: ["<%= paths.test %>/index.html"]
         },
@@ -145,19 +136,13 @@ module.exports = function (grunt) {
             ],
         },
 
-        nugetpack: {
-            all: {
-                src: "nuget/*.nuspec",
-                dest: "nuget/",
-
+        connect: {
+            test: {
                 options: {
-                    version: "<%= pkg.version %>"
+                    port: "8080",
+                    open: "http://localhost:8080/tests/index.html",
+                    keepalive: true
                 }
-            }
-        },
-        nugetpush: {
-            all: {
-                src: "nuget/*.<%= pkg.version %>.nupkg"
             }
         },
 
@@ -177,6 +162,22 @@ module.exports = function (grunt) {
             gruntfile: {
                 files: ["Gruntfile.js"]
             }
+        },
+        
+        nugetpack: {
+            all: {
+                src: "nuget/*.nuspec",
+                dest: "nuget/",
+                
+                options: {
+                    version: "<%= pkg.version %>"
+                }
+            }
+        },
+        nugetpush: {
+            all: {
+                src: "nuget/*.<%= pkg.version %>.nupkg"
+            }
         }
     });
     
@@ -193,7 +194,7 @@ module.exports = function (grunt) {
     grunt.registerTask("dev", ["tslint:app", "typescript:dev", "jshint:dev"]);
     grunt.registerTask("dev-polyfill", ["tslint:polyfill", "typescript:polyfill", "jshint:polyfill"]);
 
-    grunt.registerTask("polyfill", ["tslint:polyfill", "browserify:polyfill", "append-polyfill"]);
+    grunt.registerTask("polyfill", ["tslint:polyfill", "browserify:polyfill", "append-polyfill", "copy:polyfill"]);
     grunt.registerTask("build", ["tslint:app", "typescript:dist", "jshint:dist", "requirejs", "typescript:node", "jshint:node"]);
     
     grunt.registerTask("test-polyfill", ["dev-polyfill", "tslint:test", "typescript:test", "jshint:test", "mocha:test", "clean:polyfill", "clean:test"]);

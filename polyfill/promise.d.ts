@@ -69,18 +69,3 @@ declare class Promise<T> implements Thenable<T> {
 declare module "promise" {
     export = Promise;
 }
-
-declare module "promise/extensions" {
-    export function timeout(ms?: number): Promise<void>;
-
-    export function module(name: string): Promise<any>;
-    export function module(names: string[]): Promise<any[]>;
-    export function module(...names: string[]): Promise<any[]>;
-
-    export function forEach<T>(values: T[], executor: (value: T, index: number) => Promise<T>): Promise<T>;
-    export function forEach<T>(values: T[], executor: (value: T, index: number) => T): Promise<T>;
-    export function forEach<T>(values: T[], executor: (value: T, index: number) => void): Promise<void>;
-
-    export function map<T, U>(values: T[], executor: (value: T, index: number) => Promise<U>): Promise<U[]>;
-    export function map<T, U>(values: T[], executor: (value: T, index: number) => U): Promise<U[]>;
-}
