@@ -25,13 +25,12 @@ typings/
 # Ignore development files
 *.js.map
 *.d.ts
-!_definitions.d.ts
-!polyfill/promise.d.ts
-!polyfill/promise.d.ts
 *.js
+!*.tmpl.js
+!_definitions.d.ts
 !Gruntfile.js
-!polyfill/polyfill.js
 !dist/*.js
+!polyfill/promise.d.ts
 
 # Enable "build/" folder in the NuGet Packages folder since NuGet packages use it for MSBuild targets
 !packages/*/build/

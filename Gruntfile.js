@@ -31,25 +31,24 @@ module.exports = function (grunt) {
                 module: "amd",
                 sourceMap: false,
                 declaration: false,
-                comments: false,
-                disallowbool: true,
-                disallowimportmodule: true
+                removeComments: true
             },
             dev: {
                 src: "<%= paths.src %>/**/*.ts",
                 options: {
-                    sourceMap: true
+                    sourceMap: true,
+                    removeComments: true
+                }
+            },
+            polyfill: {
+                src: "<%= paths.polyfill %>/**/*.ts",
+                options: {
+                    sourceMap: true,
+                    removeComments: true
                 }
             },
             test: {
                 src: "<%= paths.test %>/**/*.ts"
-            },
-            dist: {
-                src: "<%= paths.src %>/**/*.ts",
-                dest: "<%= paths.build %>/",
-                options: {
-                    basePath: "<%= paths.src %>"
-                }
             },
             node: {
                 src: "<%= paths.src %>/**/*.ts",
@@ -77,8 +76,14 @@ module.exports = function (grunt) {
                 }
             },
             polyfill: {
+                options: {
+                    //require: [["./polyfill/class.ts", { expose: "./test" }]]
+                    //require: ["./polyfill/class.ts"]
+                },
                 files: {
-                    "dist/polyfill.js": ["<%= paths.polyfill %>/class.ts"]
+                    "dist/polyfill.js": ["<%= paths.polyfill %>/polyfill.ts"]
+                    //src: [],
+                    //dest: "dist/polyfill.js"
                 }
             }
         },
@@ -129,17 +134,14 @@ module.exports = function (grunt) {
 
         clean: {
             nuget: "nuget/*.nupkg",
-            dev: [
-                "<%= paths.src %>/**/*.d.ts",
-                "!<%= paths.src %>/promise.d.ts",
-                "<%= paths.src %>/**/*.js",
-                "<%= paths.src %>/**/*.js.map"
+            polyfill: [
+                "<%= paths.polyfill %>/**/*.{d.ts,js,js.map}",
+                "!<%= paths.polyfill %>/promise.d.ts",
+                "!<%= paths.polyfill %>/*.tmpl.js"
             ],
             test: [
-                "<%= paths.test %>/**/*.d.ts",
-                "!<%= paths.test %>/tests.d.ts",
-                "<%= paths.test %>/**/*.js",
-                "<%= paths.test %>/**/*.js.map"
+                "<%= paths.test %>/**/*.{d.ts,js,js.map}",
+                "!<%= paths.test %>/tests.d.ts"
             ],
         },
 
@@ -178,16 +180,25 @@ module.exports = function (grunt) {
         }
     });
     
-    grunt.registerTask("create-polyfill", function () {
+    grunt.registerTask("append-polyfill", function () {
+        var content = grunt.file.read("dist/polyfill.js"),
+            umd = grunt.file.read("polyfill/umd.tmpl.js");
 
+        umd = umd.replace("/*****************************CONTENT*****************************/", content);
+        umd = require("derequire")(umd, "_import", "require");
+
+        grunt.file.write("dist/polyfill.js", umd);
     });
 
     grunt.registerTask("dev", ["tslint:app", "typescript:dev", "jshint:dev"]);
+    grunt.registerTask("dev-polyfill", ["tslint:polyfill", "typescript:polyfill", "jshint:polyfill"]);
 
-    grunt.registerTask("polyfill", ["tslint:polyfill", "browserify:polyfill", "jshint:polyfill"]);
+    grunt.registerTask("polyfill", ["tslint:polyfill", "browserify:polyfill", "append-polyfill"]);
     grunt.registerTask("build", ["tslint:app", "typescript:dist", "jshint:dist", "requirejs", "typescript:node", "jshint:node"]);
     
-    grunt.registerTask("test", ["dev", "tslint:test", "typescript:test", "jshint:test", "mocha:test"]);
+    grunt.registerTask("test-polyfill", ["dev-polyfill", "tslint:test", "typescript:test", "jshint:test", "mocha:test", "clean:polyfill", "clean:test"]);
+    grunt.registerTask("btest-polyfill", ["dev-polyfill", "tslint:test", "typescript:test", "jshint:test", "connect:test"]);
+
     grunt.registerTask("nuget", ["nugetpack", "nugetpush"]);
 
     grunt.registerTask("default", ["clean", "build", "test"]);

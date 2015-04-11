@@ -28,6 +28,7 @@
         "before": false,
         "after": false,
         "Promise": false,
+        "root": false,
         "MessageChannel": false
     }
 }
