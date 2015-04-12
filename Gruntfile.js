@@ -23,6 +23,7 @@ module.exports = function (grunt) {
             lib: "lib",
             temp: ".temp",
             test: "tests",
+            testpzr: "tests/promizr",
             testpoly: "tests/testpoly"
         },
         pkg: grunt.file.readJSON("package.json"),
@@ -36,21 +37,28 @@ module.exports = function (grunt) {
                 removeComments: true
             },
             src: {
-                src: "<%= paths.src %>/**/*.ts",
+                src: ["<%= paths.src %>/**/*.ts", "!<%= paths.src %>/**/*.d.ts"],
                 options: {
                     declaration: true,
                     module: "commonjs",
                 }
             },
             polyfill: {
-                src: "<%= paths.polyfill %>/**/*.ts",
+                src: ["<%= paths.polyfill %>/**/*.ts", "!<%= paths.polyfill %>/**/*.d.ts"],
+                options: {
+                    sourceMap: true,
+                    removeComments: false
+                }
+            },
+            testpzr: {
+                src: ["<%= paths.testpzr %>/**/*.ts", "!<%= paths.testpzr %>/**/*.d.ts"],
                 options: {
                     sourceMap: true,
                     removeComments: false
                 }
             },
             testpoly: {
-                src: "<%= paths.testpoly %>/**/*.ts",
+                src: ["<%= paths.testpoly %>/**/*.ts", "!<%= paths.testpoly %>/**/*.d.ts"],
                 options: {
                     sourceMap: true,
                     removeComments: false
@@ -135,11 +143,22 @@ module.exports = function (grunt) {
             options: {
                 configuration: grunt.file.readJSON("tslint.json")
             },
+            all: {
+                src: [
+                    "<%= tslint.src.src %>", 
+                    "<%= tslint.polyfill.src %>", 
+                    "<%= tslint.testpzr.src %>", 
+                    "<%= tslint.testpoly.src %>"
+                ]
+            },
             src: {
                 src: "<%= paths.src %>/**/*.ts"
             },
             polyfill: {
                 src: "<%= paths.polyfill %>/**/*.ts"
+            },
+            testpzr: {
+                src: "<%= paths.testpzr %>/**/*.ts"
             },
             testpoly: {
                 src: "<%= paths.testpoly %>/**/*.ts"
@@ -147,6 +166,7 @@ module.exports = function (grunt) {
         },
 
         mocha: {
+            testpzr: ["<%= paths.testpzr %>/index.html"],
             testpoly: ["<%= paths.testpoly %>/index.html"]
         },
 
@@ -159,16 +179,38 @@ module.exports = function (grunt) {
                 "<%= paths.polyfill %>/**/*.{d.ts,js,js.map}",
                 "!<%= paths.polyfill %>/promise.d.ts"
             ],
+            test: [
+                "<%= clean.src %>",
+                "<%= clean.polyfill %>",
+                "<%= clean.testpzr %>",
+                "<%= clean.testpoly %>",
+            ],
+            testpzr: [
+                "<%= clean.src %>",
+                "<%= paths.testpzr %>/**/*.{d.ts,js,js.map}",
+                "!<%= paths.testpzr %>/tests.d.ts"
+            ],
             testpoly: [
+                "<%= clean.polyfill %>",
                 "<%= paths.testpoly %>/**/*.{d.ts,js,js.map}",
                 "!<%= paths.testpoly %>/tests.d.ts"
-            ],
+            ]
         },
 
         connect: {
             options: {
                 port: "8080",
-                keepalive: true
+                livereload: 23432
+            },
+            test: {
+                options: {
+                    open: "http://localhost:8080/<%= paths.test %>/",
+                }
+            },
+            testpzr: {
+                options: {
+                    open: "http://localhost:8080/<%= paths.testpzr %>/index.html",
+                }
             },
             testpoly: {
                 options: {
@@ -178,11 +220,23 @@ module.exports = function (grunt) {
         },
 
         watch: {
-            tslint: { files: ["<%= tslint.dev.src %>"], tasks: ["tslint:src"] },
-            src: { files: ["<%= typescript.src.src %>"], tasks: ["typescript:src"] },
+            tslint: { files: ["<%= tslint.all.src %>"], tasks: ["tslint:src"] },
+            promizr: { files: ["<%= typescript.src.src %>"], tasks: ["typescript:src", "concat:dist", "wrapper:dist"] },
             polyfill: { files: ["<%= typescript.polyfill.src %>"], tasks: ["typescript:polyfill"] },
             testpoly: { files: ["<%= typescript.testpoly.src %>"], tasks: ["typescript:testpoly"] },
-            gruntfile: { files: ["Gruntfile.js"] }
+            testpzr: { files: ["<%= typescript.testpzr.src %>"], tasks: ["typescript:testpzr"] },
+            gruntfile: { files: ["Gruntfile.js"] },
+
+            livereload: {
+                options: {
+                    livereload: "<%= connect.options.livereload %>"
+                },
+                files: [
+                    "<%= paths.dist %>/**/*.js",
+                    "<%= paths.polyfill %>/**/*.{js,js.map}",
+                    "<%= paths.test %>/**/*.{js,html}"
+                ]
+            }
         },
         
         nugetpack: {
@@ -234,16 +288,22 @@ module.exports = function (grunt) {
 
     grunt.registerTask("dev-promizr", ["tslint:src", "typescript:dev"]);
     grunt.registerTask("dev-polyfill", ["tslint:polyfill", "typescript:polyfill"]);
+    grunt.registerTask("dev-testpzr", ["tslint:testpzr", "typescript:testpzr"]);
     grunt.registerTask("dev-testpoly", ["tslint:testpoly", "typescript:testpoly"]);
 
     grunt.registerTask("polyfill", ["tslint:polyfill", "browserify:polyfill", "wrapper:polyfill", "uglify:polyfill", "copy:polyfill", "clean:polyfill"]);
     grunt.registerTask("promizr", ["tslint:src", "typescript:src", "concat:dist", "wrapper:dist", "uglify:dist", "concat:decla", "wrapper:decla", "clean:src"]);
     grunt.registerTask("build", ["polyfill", "promizr"]);
 
-    grunt.registerTask("test-polyfill", ["dev-polyfill", "dev-testpoly", "mocha:testpoly", "clean:polyfill", "clean:testpoly"]);
-    grunt.registerTask("btest-polyfill", ["dev-polyfill", "dev-testpoly", "connect:testpoly"]);
+    grunt.registerTask("test-promizr", ["promizr", "dev-testpzr", "mocha:testpzr", "clean:testpzr"]);
+    grunt.registerTask("test-polyfill", ["dev-polyfill", "dev-testpoly", "mocha:testpoly", "clean:testpoly"]);
+    grunt.registerTask("test", ["dev-polyfill", "promizr", "dev-testpoly", "dev-testpzr", "mocha", "clean:test"]);
+
+    grunt.registerTask("btest-promizr", ["promizr", "dev-testpzr", "connect:testpzr", "watch"]);
+    grunt.registerTask("btest-polyfill", ["dev-polyfill", "dev-testpoly", "connect:testpoly", "watch"]);
+    grunt.registerTask("btest", ["promizr", "dev-polyfill", "dev-testpoly", "dev-testpzr", "connect:test", "watch"]);
 
     grunt.registerTask("nuget", ["nugetpack", "nugetpush"]);
 
-    grunt.registerTask("default", ["clean", "build", "test"]);
+    grunt.registerTask("default", ["clean:test", "polyfill", "test"]);
 };
