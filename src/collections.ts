@@ -1,4 +1,18 @@
-﻿/// <reference path="base.d.ts" />
+﻿/// <reference path="../_definitions.d.ts" />
+
+export interface PromiseTaskExecutor<T> {
+    (): Promise<T>
+    (...args: any[]): Promise<T>
+}
+
+export interface PromiseListIterator<T, U> {
+    (item: T, index: number, list: T[]): Promise<U>;
+}
+
+export interface PromiseReduceIterator<T> {
+    (memo: T, item: T): Promise<T>;
+}
+
 
 export function each<T>(array: T[], iterator: PromiseListIterator<T, any>): Promise<void> {
     var promises = array.map(iterator);

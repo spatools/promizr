@@ -1,4 +1,12 @@
-﻿/// <reference path="base.d.ts" />
+﻿/// <reference path="../_definitions.d.ts" />
+
+export interface PromiseTaskExecutorObject<T> {
+    [key: string]: () => Promise<T>
+}
+
+export interface PromiseSeriesObjectResult<T> {
+    [key: string]: T
+}
 
 function listSeries<T>(array: PromiseTaskExecutor<T>[]): Promise<T[]> {
     var p = Promise.resolve(),

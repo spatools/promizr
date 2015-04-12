@@ -1,4 +1,12 @@
-﻿/// <reference path="base.d.ts" />
+﻿/// <reference path="../_definitions.d.ts" />
+
+export interface TypedFunction<T> {
+    (...args: any[]): T;
+}
+
+export interface HashFunction {
+    (args: any[]): string;
+}
 
 export function apply<T>(task: TypedFunction<T>, ...args: any[]): TypedFunction<T> {
     return function () {
@@ -51,7 +59,6 @@ export function tapOn<T, U>(owner: any, task: string|TypedFunction<T>, ...args: 
     };
 }
 
-type HashFunction = (args: any[]) => string;
 export function memoize<T>(task: PromiseTaskExecutor<T>, hash?: boolean|HashFunction): PromiseTaskExecutor<T> {
     var cache,
         haveToHash = typeof hash !== "undefined",
@@ -154,4 +161,79 @@ export function module<T>(): Promise<T|T[]> {
             reject(e);
         }
     });
+}
+
+export function denodify<T>(owner: any, fn: Function, ...args: any[]): Promise<T>;
+export function denodify<T>(fn: Function, ...args: any[]): Promise<T>;
+export function denodify<T>(...args: any[]): Promise<T> {
+    var fn = args[1],
+        owner = args[0];
+
+    if (typeof owner === "function" && typeof fn !== "function") {
+        fn = owner;
+        owner = null;
+    }
+
+    return new Promise((resolve, reject) => {
+        function callback(err) {
+            if (err) {
+                return reject(err);
+            }
+
+            var result = Array.prototype.slice.call(arguments, 1);
+            if (result.length === 1) {
+                result = result[0];
+            }
+
+            resolve(result);
+        }
+
+        fn.call(owner, args.concat([callback]));
+    });
+}
+
+export function uncallbackify<T>(owner: any, fn: Function, ...args: any[]): Promise<T>;
+export function uncallbackify<T>(fn: Function, ...args: any[]): Promise<T>;
+export function uncallbackify<T>(...args: any[]): Promise<T> {
+    var fn = args[1],
+        owner = args[0];
+
+    if (typeof owner === "function" && typeof fn !== "function") {
+        fn = owner;
+        owner = null;
+    }
+
+    return new Promise((resolve, reject) => {
+        function success() {
+            var result = Array.prototype.slice.call(arguments, 0);
+            if (result.length === 1) {
+                result = result[0];
+            }
+
+            resolve(result);
+        }
+        function error() {
+            var err = Array.prototype.slice.call(arguments, 0);
+            if (err.length === 1) {
+                err = err[0];
+            }
+
+            if (!(err instanceof Error)) {
+                err = new Error(err.toString());
+                err.innerError = err;
+            }
+
+            reject(err);
+        }
+
+        fn.call(owner, args.concat([success, error]));
+    });
+}
+
+export function polyfill(): typeof Promise {
+    if (typeof process === "undefined" || {}.toString.call(process) !== "[object process]") {
+        throw new Error("This method is only available in Node.JS environment");
+    }
+
+    return require("./polyfill");
 }

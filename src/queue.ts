@@ -1,4 +1,4 @@
-﻿/// <reference path="base.d.ts" />
+﻿/// <reference path="../_definitions.d.ts" />
 
 export interface ProcessQueueItem<T, U> {
     data?: T;
@@ -248,7 +248,7 @@ export class PriorityProcessQueue<T, U> extends ProcessQueue<T, U> {
         return promise;
     }
 
-    private binarySearch(seq: QueueTaskItem<T>[], item: QueueTaskItem<T>, compare: (a: QueueTaskItem<T>, b: QueueTaskItem<T>) => number): number {
+    private binarySearch(seq: ProcessQueueItem<T, U>[], item: ProcessQueueItem<T, U>, compare: (a: ProcessQueueItem<T, U>, b: ProcessQueueItem<T, U>) => number): number {
         var beg = -1,
             end = seq.length - 1,
             mid: number;
@@ -266,7 +266,7 @@ export class PriorityProcessQueue<T, U> extends ProcessQueue<T, U> {
 
         return beg;
     }
-    private compareTasks(a: QueueTaskItem<T>, b: QueueTaskItem<T>): number {
+    private compareTasks(a: ProcessQueueItem<T, U>, b: ProcessQueueItem<T, U>): number {
         return a.priority - b.priority;
     }
 }
