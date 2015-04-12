@@ -97,9 +97,8 @@ function reduce(array, memo, iterator) {
 }
 exports.reduce = reduce;
 function reduceRight(array, memo, iterator) {
-    var clone = [].concat(array);
-    clone.reverse();
-    return reduce(array, memo, iterator);
+    var clone = [].concat(array).reverse();
+    return reduce(clone, memo, iterator);
 }
 exports.reduceRight = reduceRight;
 function find(array, iterator) {
@@ -121,7 +120,6 @@ function find(array, iterator) {
         if (err !== "PROMIZR_NOTFOUND") {
             throw err;
         }
-        return null;
     }).then(function (result) {
         while (resolvers.length) {
             resolvers.pop().call(null);
@@ -131,7 +129,6 @@ function find(array, iterator) {
 }
 exports.find = find;
 function findSeries(array, iterator) {
-    var results = [];
     function finder(item, index) {
         return iterator(item, index, array).then(function (ok) {
             if (ok) {
@@ -174,7 +171,7 @@ function every(array, iterator) {
         }
     }); });
     return Promise.all(promises).then(function () { return true; }).catch(function (err) {
-        if (err !== "PROMIZR_NOTOK") {
+        if (err.message !== "PROMIZR_NOTOK") {
             throw err;
         }
         return false;
