@@ -328,7 +328,7 @@ module.exports = function (grunt) {
     grunt.registerTask("btest", ["promizr", "dev-polyfill", "dev-testpoly", "dev-testpzr", "connect:test", "watch"]);
     
     grunt.registerTask("nuget", ["nugetpack", "nugetpush"]);
-    grunt.registerTask("push", ["build", "copy:publish", "buildcontrol:dist"]);
+    grunt.registerTask("prepublish", ["build", "copy:publish", "buildcontrol:dist"]);
     grunt.registerTask("publish", ["build", "copy:publish", "buildcontrol:publish", "nuget"]);
     
     grunt.registerTask("default", ["clean:test", "polyfill", "test"]);
