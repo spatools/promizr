@@ -1,4 +1,3 @@
-/// <reference path="promise.d.ts" />
 /// <reference path="../_definitions.d.ts" />
 
 function isWellImplemented(P) {

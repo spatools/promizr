@@ -1,4 +1,4 @@
-/// <reference path="./promise.d.ts" />
+/// <reference path="../_definitions.d.ts" />
 
 import status = require("./status");
 import tasks = require("./tasks");
