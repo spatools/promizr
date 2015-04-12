@@ -4,14 +4,16 @@ module.exports = function (grunt) {
     // Load grunt tasks automatically
     require("jit-grunt")(grunt, {
         nugetpack: "grunt-nuget",
-        nugetpush: "grunt-nuget"
-    }); 
+        nugetpush: "grunt-nuget",
+        buildcontrol: "grunt-build-control"
+    });
     require("time-grunt")(grunt); // Time how long tasks take. Can help when optimizing build times
-
-    var options = {
-        dev: grunt.option("dev")
-    };
-
+    
+    var pkg = require("./package.json"),
+        options = {
+            dev: grunt.option("dev")
+        };
+    
     // Define the configuration for all the tasks
     grunt.initConfig({
         // Configurable paths
@@ -26,8 +28,8 @@ module.exports = function (grunt) {
             testpzr: "tests/promizr",
             testpoly: "tests/testpoly"
         },
-        pkg: grunt.file.readJSON("package.json"),
-
+        pkg: pkg,
+        
         typescript: {
             options: {
                 target: "es3",
@@ -65,7 +67,7 @@ module.exports = function (grunt) {
                 }
             }
         },
-
+        
         browserify: {
             options: {
                 browserifyOptions: {
@@ -86,7 +88,7 @@ module.exports = function (grunt) {
                 }
             }
         },
-
+        
         uglify: {
             dist: {
                 src: "<%= paths.dist %>/promizr.js",
@@ -97,7 +99,7 @@ module.exports = function (grunt) {
                 dest: "<%= paths.dist %>/polyfill.min.js"
             }
         },
-
+        
         concat: {
             dist: {
                 src: "<%= paths.src %>/*.js",
@@ -120,7 +122,7 @@ module.exports = function (grunt) {
                 src: "<%= paths.dist %>/promizr.d.ts",
                 options: {
                     template: "<%= paths.build %>/decla.tmpl.d.ts",
-                    replacer: function(content) { return content.replace(new RegExp("(export )?declare", "g"), "export"); }
+                    replacer: function (content) { return content.replace(new RegExp("(export )?declare", "g"), "export"); }
                 }
             },
             polyfill: {
@@ -131,14 +133,14 @@ module.exports = function (grunt) {
                 }
             }
         },
-
+        
         copy: {
             polyfill: {
                 src: "<%= paths.polyfill %>/promise.d.ts",
                 dest: "<%= paths.dist %>/promise.d.ts"
             }
         },
-
+        
         tslint: {
             options: {
                 configuration: grunt.file.readJSON("tslint.json")
@@ -164,12 +166,12 @@ module.exports = function (grunt) {
                 src: "<%= paths.testpoly %>/**/*.ts"
             }
         },
-
+        
         mocha: {
             testpzr: ["<%= paths.testpzr %>/index.html"],
             testpoly: ["<%= paths.testpoly %>/index.html"]
         },
-
+        
         clean: {
             nuget: "nuget/*.nupkg",
             src: [
@@ -196,7 +198,7 @@ module.exports = function (grunt) {
                 "!<%= paths.testpoly %>/tests.d.ts"
             ]
         },
-
+        
         connect: {
             options: {
                 port: "8080",
@@ -218,7 +220,7 @@ module.exports = function (grunt) {
                 }
             }
         },
-
+        
         watch: {
             tslint: { files: ["<%= tslint.all.src %>"], tasks: ["tslint:src"] },
             promizr: { files: ["<%= typescript.src.src %>"], tasks: ["typescript:src", "concat:dist", "wrapper:dist"] },
@@ -226,7 +228,7 @@ module.exports = function (grunt) {
             testpoly: { files: ["<%= typescript.testpoly.src %>"], tasks: ["typescript:testpoly"] },
             testpzr: { files: ["<%= typescript.testpzr.src %>"], tasks: ["typescript:testpzr"] },
             gruntfile: { files: ["Gruntfile.js"] },
-
+            
             livereload: {
                 options: {
                     livereload: "<%= connect.options.livereload %>"
@@ -236,6 +238,24 @@ module.exports = function (grunt) {
                     "<%= paths.polyfill %>/**/*.{js,js.map}",
                     "<%= paths.test %>/**/*.{js,html}"
                 ]
+            }
+        },
+        
+        buildcontrol: {
+            options: {
+                dir: "<%= paths.dist %>",
+                commit: true,
+                push: true,
+                branch: "release",
+                message: "Built %sourceName% from commit %sourceCommit% on branch %sourceBranch%"
+            },
+            dist: {
+            },
+            publish: {
+                options: {
+                    tag: pkg.version,
+                    message: "Publish %sourceName% '" + pkg.version + "' from commit %sourceCommit% on branch %sourceBranch%"
+                }
             }
         },
         
@@ -255,55 +275,55 @@ module.exports = function (grunt) {
             }
         }
     });
-
+    
     grunt.registerMultiTask("wrapper", function () {
         var options = this.options({
             token: "/*****************************CONTENT*****************************/",
             replacer: false,
             derequire: false
         });
-
+        
         if (!options.template) {
             grunt.log.error().error("A template option must be provided");
             return;
         }
-
+        
         this.files.forEach(function (f) {
             f.src.forEach(function (src) {
                 var content = grunt.file.read(src),
                     tmpl = grunt.file.read(options.template);
-
+                
                 if (options.derequire)
                     content = require("derequire")(content, "_import", "require");
-
-                if (options.replacer) 
+                
+                if (options.replacer)
                     content = options.replacer(content);
-
+                
                 grunt.file.write(src, tmpl.replace(options.token, content));
                 grunt.log.ok("File '" + src + "' wrapped using template '" + options.template + "'");
             });
         });
 
     });
-
+    
     grunt.registerTask("dev-promizr", ["tslint:src", "typescript:dev"]);
     grunt.registerTask("dev-polyfill", ["tslint:polyfill", "typescript:polyfill"]);
     grunt.registerTask("dev-testpzr", ["tslint:testpzr", "typescript:testpzr"]);
     grunt.registerTask("dev-testpoly", ["tslint:testpoly", "typescript:testpoly"]);
-
+    
     grunt.registerTask("polyfill", ["tslint:polyfill", "browserify:polyfill", "wrapper:polyfill", "uglify:polyfill", "copy:polyfill", "clean:polyfill"]);
     grunt.registerTask("promizr", ["tslint:src", "typescript:src", "concat:dist", "wrapper:dist", "uglify:dist", "concat:decla", "wrapper:decla", "clean:src"]);
     grunt.registerTask("build", ["polyfill", "promizr"]);
-
+    
     grunt.registerTask("test-promizr", ["promizr", "dev-testpzr", "mocha:testpzr", "clean:testpzr"]);
     grunt.registerTask("test-polyfill", ["dev-polyfill", "dev-testpoly", "mocha:testpoly", "clean:testpoly"]);
     grunt.registerTask("test", ["dev-polyfill", "promizr", "dev-testpoly", "dev-testpzr", "mocha", "clean:test"]);
-
+    
     grunt.registerTask("btest-promizr", ["promizr", "dev-testpzr", "connect:testpzr", "watch"]);
     grunt.registerTask("btest-polyfill", ["dev-polyfill", "dev-testpoly", "connect:testpoly", "watch"]);
     grunt.registerTask("btest", ["promizr", "dev-polyfill", "dev-testpoly", "dev-testpzr", "connect:test", "watch"]);
-
+    
     grunt.registerTask("nuget", ["nugetpack", "nugetpush"]);
-
+    
     grunt.registerTask("default", ["clean:test", "polyfill", "test"]);
 };
