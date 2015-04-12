@@ -179,7 +179,11 @@ function every(array, iterator) {
 }
 exports.every = every;
 function concat(array, iterator) {
-    return map(array, iterator).then(function (results) { return Array.prototype.concat.apply([], results.filter(function (a) { return !!a; })); });
+    var results = [];
+    var promises = array.map(function (value, index) { return iterator(value, index, array).then(function (res) {
+        results = results.concat(res || []);
+    }); });
+    return Promise.all(promises).then(function () { return results; });
 }
 exports.concat = concat;
 function concatSeries(array, iterator) {
