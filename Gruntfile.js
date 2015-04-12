@@ -140,8 +140,12 @@ module.exports = function (grunt) {
                 dest: "<%= paths.dist %>/promise.d.ts"
             },
             publish: {
-                src: ["{bower,package}.json", "README.md", "LICENSE"],
-                dest: "<%= paths.dist %>/"
+                files: [{
+                    expand: true,
+                    cwd: "./",
+                    src: ["{bower,package}.json", "README.md", "LICENSE"],
+                    dest: "<%= paths.dist %>/"
+                }]
             }
         },
         
