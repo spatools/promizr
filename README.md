@@ -48,7 +48,7 @@ Configure RequireJS.
 requirejs.config({
     paths: {
         promise: 'path/to/promizr/polyfill',
-        promizr: 'path/to/promizr'
+        promizr: 'path/to/promizr/promizr'
     }
 });
 ```
@@ -61,7 +61,7 @@ define(["promise", "promizr"], function(Promise, promizr) {
 
     });
 
-    promizr.forEach([...], function(item) { return aPromise; }).then(...);
+    promizr.each([...], function(item) { return aPromise; }).then(...);
 });
 ```
 
@@ -76,6 +76,8 @@ promizr.polyfill();
 var promise = new Promise(function(resolve, reject) {
 
 });
+
+promizr.each([...], function(item) { return aPromise; }).then(...);
 ```
 
 ## Contribute
@@ -110,10 +112,18 @@ Any changes should be tested. Any additions should have a new test associated wi
 
 ```console
 $ grunt test
+# or
+$ grunt test-polyfill
+# or
+$ grunt test-promizr
 ```
 
 #### Build
 
 ```console
 $ grunt build
+# or
+$ grunt polyfill
+# or
+$ grunt promizr
 ```
