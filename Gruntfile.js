@@ -87,6 +87,17 @@ module.exports = function (grunt) {
             }
         },
 
+        uglify: {
+            dist: {
+                src: "<%= paths.dist %>/promizr.js",
+                dest: "<%= paths.dist %>/promizr.min.js"
+            },
+            polyfill: {
+                src: "<%= paths.dist %>/polyfill.js",
+                dest: "<%= paths.dist %>/polyfill.min.js"
+            }
+        },
+
         concat: {
             dist: {
                 src: "<%= paths.src %>/*.js",
@@ -125,24 +136,6 @@ module.exports = function (grunt) {
             polyfill: {
                 src: "<%= paths.polyfill %>/promise.d.ts",
                 dest: "<%= paths.dist %>/promise.d.ts"
-            }
-        },
-
-        jshint: {
-            options: {
-                jshintrc: "jshint.json",
-            },
-
-            base: ["*.js"],
-            src: ["<%= paths.src %>/**/*.js"],
-            polyfill: ["<%= paths.polyfill %>/**/*.js"],
-            dist: ["<%= paths.dist %>/**/*.js", "!<%= paths.dist %>/**/*.min.js"],
-            test: {
-                options: {
-                    "-W030": true,
-                    "-W068": true
-                },
-                src: "<%= paths.test %>/**/*.js"
             }
         },
 
@@ -191,21 +184,11 @@ module.exports = function (grunt) {
         },
 
         watch: {
-            tslint: {
-                files: ["<%= tslint.dev.src %>"],
-                tasks: ["tslint:dev"]
-            },
-            jshint: {
-                files: ["<%= jshint.dev.src %>"],
-                tasks: ["jshint:dev"]
-            },
-            test: {
-                files: ["<%= paths.test %>/*.*"],
-                tasks: ["test"]
-            },
-            gruntfile: {
-                files: ["Gruntfile.js"]
-            }
+            tslint: { files: ["<%= tslint.dev.src %>"], tasks: ["tslint:src"] },
+            src: { files: ["<%= typescript.src.src %>"], tasks: ["typescript:src"] },
+            polyfill: { files: ["<%= typescript.polyfill.src %>"], tasks: ["typescript:polyfill"] },
+            test: { files: ["<%= typescript.test.src %>"], tasks: ["typescript:test"] },
+            gruntfile: { files: ["Gruntfile.js"] }
         },
         
         nugetpack: {
@@ -252,14 +235,14 @@ module.exports = function (grunt) {
                 grunt.log.ok("File '" + src + "' wrapped using template '" + options.template + "'");
             });
         });
-        
+
     });
 
-    grunt.registerTask("dev", ["tslint:app", "typescript:dev"]);
+    grunt.registerTask("dev-promizr", ["tslint:src", "typescript:dev"]);
     grunt.registerTask("dev-polyfill", ["tslint:polyfill", "typescript:polyfill"]);
 
-    grunt.registerTask("polyfill", ["tslint:polyfill", "browserify:polyfill", "wrapper:polyfill", "copy:polyfill", "clean:polyfill"]);
-    grunt.registerTask("promizr", ["tslint:src", "typescript:src", "concat:dist", "wrapper:dist", "concat:decla", "wrapper:decla", "clean:src"]);
+    grunt.registerTask("polyfill", ["tslint:polyfill", "browserify:polyfill", "wrapper:polyfill", "uglify:polyfill", "copy:polyfill", "clean:polyfill"]);
+    grunt.registerTask("promizr", ["tslint:src", "typescript:src", "concat:dist", "wrapper:dist", "uglify:dist", "concat:decla", "wrapper:decla", "clean:src"]);
     grunt.registerTask("build", ["polyfill", "promizr"]);
     
     grunt.registerTask("test-polyfill", ["dev-polyfill", "tslint:test", "typescript:test", "jshint:test", "mocha:test", "clean:polyfill", "clean:test"]);
