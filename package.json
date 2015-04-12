@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "description": "ES6 Promise Extensions and utility methods + Polyfill which strictly follows ES6 specification",
   "author": "SPA Tools",
-  "main": "lib/promizr.js",
+  "main": "promizr.js",
   "license": "MIT",
   "scripts": {
     "test": "grunt test"

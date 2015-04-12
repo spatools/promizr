@@ -7,7 +7,7 @@
   ],
   "license": "MIT",
   "homepage": "https://github.com/spatools/promizr",
-  "main": "dist/promizr.js",
+  "main": "promizr.js",
   "keywords": [
     "promise",
     "es6",

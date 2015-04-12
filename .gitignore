@@ -14,6 +14,7 @@
 x64/
 [Bb]in/
 [Oo]bj/
+[Dd]ist/
 nuget/*.nupkg
 
 # Dependencies
