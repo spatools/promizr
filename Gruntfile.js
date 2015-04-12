@@ -22,7 +22,8 @@ module.exports = function (grunt) {
             dist: "dist",
             lib: "lib",
             temp: ".temp",
-            test: "tests"
+            test: "tests",
+            testpoly: "tests/testpoly"
         },
         pkg: grunt.file.readJSON("package.json"),
 
@@ -48,20 +49,11 @@ module.exports = function (grunt) {
                     removeComments: false
                 }
             },
-            test: {
-                src: "<%= paths.test %>/**/*.ts",
+            testpoly: {
+                src: "<%= paths.testpoly %>/**/*.ts",
                 options: {
                     sourceMap: true,
                     removeComments: false
-                }
-            },
-            node: {
-                src: "<%= paths.src %>/**/*.ts",
-                dest: "<%= paths.lib %>/",
-                options: {
-                    target: "es5",
-                    module: "commonjs",
-                    basePath: "<%= paths.src %>"
                 }
             }
         },
@@ -149,13 +141,13 @@ module.exports = function (grunt) {
             polyfill: {
                 src: "<%= paths.polyfill %>/**/*.ts"
             },
-            test: {
-                src: "<%= paths.test %>/**/*.ts"
+            testpoly: {
+                src: "<%= paths.testpoly %>/**/*.ts"
             }
         },
 
         mocha: {
-            test: ["<%= paths.test %>/index.html"]
+            testpoly: ["<%= paths.testpoly %>/index.html"]
         },
 
         clean: {
@@ -167,18 +159,20 @@ module.exports = function (grunt) {
                 "<%= paths.polyfill %>/**/*.{d.ts,js,js.map}",
                 "!<%= paths.polyfill %>/promise.d.ts"
             ],
-            test: [
-                "<%= paths.test %>/**/*.{d.ts,js,js.map}",
-                "!<%= paths.test %>/tests.d.ts"
+            testpoly: [
+                "<%= paths.testpoly %>/**/*.{d.ts,js,js.map}",
+                "!<%= paths.testpoly %>/tests.d.ts"
             ],
         },
 
         connect: {
-            test: {
+            options: {
+                port: "8080",
+                keepalive: true
+            },
+            testpoly: {
                 options: {
-                    port: "8080",
-                    open: "http://localhost:8080/tests/index.html",
-                    keepalive: true
+                    open: "http://localhost:8080/<%= paths.testpoly %>/index.html",
                 }
             }
         },
@@ -187,7 +181,7 @@ module.exports = function (grunt) {
             tslint: { files: ["<%= tslint.dev.src %>"], tasks: ["tslint:src"] },
             src: { files: ["<%= typescript.src.src %>"], tasks: ["typescript:src"] },
             polyfill: { files: ["<%= typescript.polyfill.src %>"], tasks: ["typescript:polyfill"] },
-            test: { files: ["<%= typescript.test.src %>"], tasks: ["typescript:test"] },
+            testpoly: { files: ["<%= typescript.testpoly.src %>"], tasks: ["typescript:testpoly"] },
             gruntfile: { files: ["Gruntfile.js"] }
         },
         
@@ -240,13 +234,14 @@ module.exports = function (grunt) {
 
     grunt.registerTask("dev-promizr", ["tslint:src", "typescript:dev"]);
     grunt.registerTask("dev-polyfill", ["tslint:polyfill", "typescript:polyfill"]);
+    grunt.registerTask("dev-testpoly", ["tslint:testpoly", "typescript:testpoly"]);
 
     grunt.registerTask("polyfill", ["tslint:polyfill", "browserify:polyfill", "wrapper:polyfill", "uglify:polyfill", "copy:polyfill", "clean:polyfill"]);
     grunt.registerTask("promizr", ["tslint:src", "typescript:src", "concat:dist", "wrapper:dist", "uglify:dist", "concat:decla", "wrapper:decla", "clean:src"]);
     grunt.registerTask("build", ["polyfill", "promizr"]);
-    
-    grunt.registerTask("test-polyfill", ["dev-polyfill", "tslint:test", "typescript:test", "jshint:test", "mocha:test", "clean:polyfill", "clean:test"]);
-    grunt.registerTask("btest-polyfill", ["dev-polyfill", "tslint:test", "typescript:test", "jshint:test", "connect:test"]);
+
+    grunt.registerTask("test-polyfill", ["dev-polyfill", "dev-testpoly", "mocha:testpoly", "clean:polyfill", "clean:testpoly"]);
+    grunt.registerTask("btest-polyfill", ["dev-polyfill", "dev-testpoly", "connect:testpoly"]);
 
     grunt.registerTask("nuget", ["nugetpack", "nugetpush"]);
 

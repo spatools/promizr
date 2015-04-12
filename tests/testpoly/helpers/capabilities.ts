@@ -1,5 +1,4 @@
-/// <reference path="../../polyfill/promise.d.ts" />
-/// <reference path="../../typings/sinon/sinon.d.ts" />
+/// <reference path="../tests.d.ts" />
 
 import Promise = require("polyfill/class");
 import abstract = require("polyfill/abstract");
