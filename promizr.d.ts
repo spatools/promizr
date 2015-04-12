@@ -41,8 +41,6 @@ export function series<T>(tasks: PromiseTaskExecutor<T>[]): Promise<T[]>;
 export function series<T>(tasks: PromiseTaskExecutorObject<T>): Promise<PromiseSeriesObjectResult<T>>;
 export function parallel<T>(tasks: PromiseTaskExecutor<T>[]): Promise<T[]>;
 export function parallel<T>(tasks: PromiseTaskExecutorObject<T>): Promise<PromiseSeriesObjectResult<T>>;
-export function parallelLimit<T>(tasks: PromiseTaskExecutor<T>[], limit: number): Promise<T[]>;
-export function parallelLimit<T>(tasks: PromiseTaskExecutorObject<T>, limit: number): Promise<PromiseSeriesObjectResult<T>>;
 export function whilst<T>(test: () => boolean, task: PromiseTaskExecutor<T>): Promise<void>;
 export function doWhilst<T>(executor: PromiseTaskExecutor<T>, test: (res?: T) => boolean): Promise<void>;
 export function until<T>(test: () => boolean, task: PromiseTaskExecutor<T>): Promise<void>;
@@ -126,6 +124,8 @@ export function taskQueue<T>(limit?: number, list?: PromiseTaskExecutor<T>[]): T
 export function priorityTaskQueue<T>(limit?: number, list?: PromiseTaskExecutor<T>[]): PriorityTaskQueue<T>;
 export function eachLimit<T>(array: T[], limit: number, iterator: PromiseListIterator<T, any>): Promise<void>;
 export function mapLimit<T, U>(array: T[], limit: number, iterator: PromiseListIterator<T, U>): Promise<U[]>;
+export function parallelLimit<T>(tasks: PromiseTaskExecutor<T>[], limit: number): Promise<T[]>;
+export function parallelLimit<T>(tasks: PromiseTaskExecutorObject<T>, limit: number): Promise<PromiseSeriesObjectResult<T>>;
 
 /// <reference path="../_definitions.d.ts" />
 export interface TypedFunction<T> {

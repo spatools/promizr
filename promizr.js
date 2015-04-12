@@ -243,10 +243,6 @@ function parallel(tasks) {
     return Array.isArray(tasks) ? listParallel(tasks) : objectParallel(tasks);
 }
 exports.parallel = parallel;
-function parallelLimit(tasks, limit) {
-    return Promise.reject("not implemented");
-}
-exports.parallelLimit = parallelLimit;
 function whilst(test, task) {
     function next() {
         if (test()) {
@@ -718,6 +714,19 @@ function mapLimit(array, limit, iterator) {
     return taskQueue(limit).push(iterators);
 }
 exports.mapLimit = mapLimit;
+function parallelLimit(tasks, limit) {
+    if (Array.isArray(tasks)) {
+        return taskQueue(limit).push(tasks);
+    }
+    var obj = tasks, data = Object.keys(obj), result = {};
+    function worker(key) {
+        return obj[key]().then(function (res) {
+            result[key] = res;
+        });
+    }
+    return queue(worker, limit).push(data).then(function () { return result; });
+}
+exports.parallelLimit = parallelLimit;
 
 function apply(task) {
     var args = [];
