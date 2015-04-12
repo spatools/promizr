@@ -20,14 +20,20 @@ export function each<T>(array: T[], iterator: PromiseListIterator<T, any>): Prom
 }
 
 export function eachSeries<T>(array: T[], iterator: PromiseListIterator<T, any>): Promise<void> {
-    var p = Promise.resolve(),
-        i = 0, len = array.length;
+    return new Promise<void>((resolve: any, reject) => {
+        var p = Promise.resolve(),
+            i = 0, len = array.length;
 
-    for (; i < len; i++) {
-        p = p.then(iterator.bind(null, array[i], i, array));
-    }
+        function partial(value: T, index: number): () => Promise<any> {
+            return () => iterator(value, index, array);
+        }
 
-    return p.then(() => { return; });
+        for (; i < len; i++) {
+            p = p.then(partial(array[i], i));
+        }
+
+        return p.then(() => resolve(), reject);
+    });
 }
 
 
