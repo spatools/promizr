@@ -1,18 +1,19 @@
 ﻿/// <reference path="../_definitions.d.ts" />
 
-export interface ProcessQueueItem<T, U> {
+export interface QueueItem<T, U> {
     data?: T;
     priority?: number;
     resolver?(result: U): void;
 }
-export interface ProcessQueueWorker<T, U> {
+export interface QueueWorker<T, U> {
     (arg: T): Promise<U>;
 }
 
-export class ProcessQueue<T, U> {
-    protected items: ProcessQueueItem<T, U>[] = [];
+
+export class Queue<T, U> {
+    protected items: QueueItem<T, U>[] = [];
     protected limit: number = 1;
-    protected worker: ProcessQueueWorker<T, U>;
+    protected worker: QueueWorker<T, U>;
     protected workers: number = 0;
 
     protected started: boolean = false;
@@ -22,7 +23,7 @@ export class ProcessQueue<T, U> {
     public ondrain: Function;
     public onsaturated: Function;
 
-    constructor(worker: ProcessQueueWorker<T, U>, limit?: number, list?: T[]) {
+    constructor(worker: QueueWorker<T, U>, limit?: number, list?: T[]) {
         if (limit) {
             this.limit = limit;
         }
@@ -108,7 +109,7 @@ export class ProcessQueue<T, U> {
             this.started = true;
         }
 
-        function capture(data: T): ProcessQueueItem<T, U> {
+        function capture(data: T): QueueItem<T, U> {
             nextTick(process);
 
             return {
@@ -161,10 +162,10 @@ export class ProcessQueue<T, U> {
     }
 }
 
-export class PriorityProcessQueue<T, U> extends ProcessQueue<T, U> {
+export class PriorityQueue<T, U> extends Queue<T, U> {
     public defaultPriority: number = 1;
 
-    constructor(worker: ProcessQueueWorker<T, U>, limit?: number, list?: T[]) {
+    constructor(worker: QueueWorker<T, U>, limit?: number, list?: T[]) {
         super(worker, limit, list);
     }
 
@@ -222,7 +223,7 @@ export class PriorityProcessQueue<T, U> extends ProcessQueue<T, U> {
             this.started = true;
         }
 
-        function capture(data: T): ProcessQueueItem<T, U> {
+        function capture(data: T): QueueItem<T, U> {
             nextTick(process);
 
             return {
@@ -248,7 +249,7 @@ export class PriorityProcessQueue<T, U> extends ProcessQueue<T, U> {
         return promise;
     }
 
-    private binarySearch(seq: ProcessQueueItem<T, U>[], item: ProcessQueueItem<T, U>, compare: (a: ProcessQueueItem<T, U>, b: ProcessQueueItem<T, U>) => number): number {
+    private binarySearch(seq: QueueItem<T, U>[], item: QueueItem<T, U>, compare: (a: QueueItem<T, U>, b: QueueItem<T, U>) => number): number {
         var beg = -1,
             end = seq.length - 1,
             mid: number;
@@ -266,12 +267,12 @@ export class PriorityProcessQueue<T, U> extends ProcessQueue<T, U> {
 
         return beg;
     }
-    private compareTasks(a: ProcessQueueItem<T, U>, b: ProcessQueueItem<T, U>): number {
+    private compareTasks(a: QueueItem<T, U>, b: QueueItem<T, U>): number {
         return a.priority - b.priority;
     }
 }
 
-export class TaskQueue<T> extends ProcessQueue<PromiseTaskExecutor<T>, T> {
+export class TaskQueue<T> extends Queue<PromiseTaskExecutor<T>, T> {
 
     constructor(limit?: number, list?: PromiseTaskExecutor<T>[]) {
         super(item => item(), limit, list);
@@ -279,7 +280,7 @@ export class TaskQueue<T> extends ProcessQueue<PromiseTaskExecutor<T>, T> {
 
 }
 
-export class PriorityTaskQueue<T> extends PriorityProcessQueue<PromiseTaskExecutor<T>, T> {
+export class PriorityTaskQueue<T> extends PriorityQueue<PromiseTaskExecutor<T>, T> {
 
     constructor(limit?: number, list?: PromiseTaskExecutor<T>[]) {
         super(item => item(), limit, list);
@@ -287,15 +288,19 @@ export class PriorityTaskQueue<T> extends PriorityProcessQueue<PromiseTaskExecut
 
 }
 
-export function queue<T, U>(worker: ProcessQueueWorker<T, U>, limit?: number, list?: T[]): ProcessQueue<T, U> {
-    return new ProcessQueue(worker, limit, list);
+
+export function queue<T, U>(worker: QueueWorker<T, U>, limit?: number, list?: T[]): Queue<T, U> {
+    return new Queue(worker, limit, list);
 }
-export function priorityQueue<T, U>(worker: ProcessQueueWorker<T, U>, limit?: number, list?: T[]): PriorityProcessQueue<T, U> {
-    return new PriorityProcessQueue(worker, limit, list);
+
+export function priorityQueue<T, U>(worker: QueueWorker<T, U>, limit?: number, list?: T[]): PriorityQueue<T, U> {
+    return new PriorityQueue(worker, limit, list);
 }
+
 export function taskQueue<T>(limit?: number, list?: PromiseTaskExecutor<T>[]): TaskQueue<T> {
     return new TaskQueue(limit, list);
 }
+
 export function priorityTaskQueue<T>(limit?: number, list?: PromiseTaskExecutor<T>[]): PriorityTaskQueue<T> {
     return new PriorityTaskQueue(limit, list);
 }
