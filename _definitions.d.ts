@@ -10,4 +10,6 @@ interface RequireDefine {
     amd: boolean;
 }
 
+declare var nextTick: (cb: Function) => void;
+
 declare var Uint8ClampedArray: any;
