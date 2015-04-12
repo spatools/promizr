@@ -55,7 +55,7 @@ export function createResolveFunction<T>(promise: Promise<T>): PromiseResolveFun
  * @param {PromiseCallback} onRejected Callback to be called whenever promise fails
  * @returns {PromiseResolveFunction} A function which resolve promise using resolution argument
  */
-export function createResolutionHandlerFunction<T>(promise: Promise<T>, onFulfilled: (resolution: T) => any, onRejected: PromiseErrorCallback): PromiseResolveFunction<T> {
+export function createResolutionHandlerFunction<T, U>(promise: Promise<T>, onFulfilled: (resolution: T) => U|Thenable<U>, onRejected: PromiseErrorCallback<U>): PromiseResolveFunction<T> {
     return (resolution: any) => {
         if (resolution === promise) {
             var err = new TypeError("Handler result cannot be same promise as input");

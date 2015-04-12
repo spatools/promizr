@@ -11,9 +11,9 @@ interface PromiseResolveFunction<T> {
     (value: T): void;
 }
 
-interface PromiseErrorCallback {
-    (reason: Error): any;
-    (reason: any): any;
+interface PromiseErrorCallback<U> {
+    (reason: Error): U|Thenable<U>;
+    (reason: any): U|Thenable<U>;
 }
 
 interface PromiseCapability<T> {
@@ -33,10 +33,8 @@ interface PromiseTask {
 }
 
 interface Thenable<T> {
-    then<U>(onFulfilled: (value: T) => Thenable<U>): Thenable<U>;
-    then<U>(onFulfilled: (value: T) => U): Thenable<U>;
-    then<U>(onFulfilled: (value: T) => Thenable<U>, onRejected: PromiseErrorCallback): Thenable<U>;
-    then<U>(onFulfilled: (value: T) => U, onRejected: PromiseErrorCallback): Thenable<U>;
+    then<U>(onFulfilled: (value: T) => U|Thenable<U>): Thenable<U>;
+    then<U>(onFulfilled: (value: T) => U|Thenable<U>, onRejected: PromiseErrorCallback<U>): Thenable<U>;
 }
 
 declare class Promise<T> implements Thenable<T> {
@@ -47,20 +45,18 @@ declare class Promise<T> implements Thenable<T> {
 
     constructor(executor: PromiseExecutor<T>);
 
-    then<U>(onFulfilled: (value: T) => Thenable<U>): Promise<U>;
-    then<U>(onFulfilled: (value: T) => U): Promise<U>;
-    then<U>(onFulfilled: (value: T) => Thenable<U>, onRejected: PromiseErrorCallback): Promise<U>;
-    then<U>(onFulfilled: (value: T) => U, onRejected: PromiseErrorCallback): Promise<U>;
+    then<U>(onFulfilled: (value: T) => U|Thenable<U>): Promise<U>;
+    then<U>(onFulfilled: (value: T) => U|Thenable<U>, onRejected: PromiseErrorCallback<U>): Promise<U>;
 
-    catch(onRejected: PromiseErrorCallback): Promise<T>;
+    catch<U>(onRejected: PromiseErrorCallback<U>): Promise<U>;
 
-    static all<T>(promises: Promise<T>[]): Promise<T>;
+    static all<T>(promises: Promise<T>[]): Promise<T[]>;
     static race<T>(promises: Promise<T>[]): Promise<T>;
 
     static cast<T>(value: any): Promise<T>;
 
-    static resolve<T>(value: T): Promise<T>;
-    static resolve<T>(value: any): Promise<T>;
+    static resolve<T>(): Promise<T>;
+    static resolve<T>(value: T|Thenable<T>): Promise<T>;
 
     static reject(reason: Error): Promise<any>;
     static reject(reason: any): Promise<any>;

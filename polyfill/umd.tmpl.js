@@ -10,7 +10,7 @@
         factory(root);
     }
 }(this, function (root) {
-    /*****************************CONTENT*****************************/
+/*****************************CONTENT*****************************/
 
-    return root.Promise;
+return root.Promise;
 }));

@@ -4,7 +4,7 @@ import status = require("./status");
 import tasks = require("./tasks");
 import utils = require("./utils");
 
-class Promise<T> {
+class Promise<T> implements Thenable<T> {
     public _status: string = status.waiting;
     public _result: any;
 
@@ -41,12 +41,12 @@ class Promise<T> {
      * @param {PromiseCallback} [onRejected] Callback to be called when Promise fails
      * @returns {Promise} Chained Promise
      */
-    public then<U>(onFulfilled: (resolution: T) => any): Promise<U>;
-    public then<U>(onFulfilled: (resolution: T) => any, onRejected: PromiseErrorCallback): Promise<U>;
-    public then<U>(onFulfilled: (resolution: T) => any, onRejected?: PromiseErrorCallback): Promise<U> {
+    public then<U>(onFulfilled: (value: T) => U|Thenable<U>): Promise<U>;
+    public then<U>(onFulfilled: (value: T) => U|Thenable<U>, onRejected: PromiseErrorCallback<U>): Promise<U>;
+    public then<U>(onFulfilled: (value: T) => U|Thenable<U>, onRejected?: PromiseErrorCallback<U>): Promise<U> {
         var self = this,
             ctor = (<any>this).constructor,
-            capability = abstract.newPromiseCapability(ctor);
+            capability = abstract.newPromiseCapability<U>(ctor);
 
         if (!utils.isCallable(onRejected)) {
             onRejected = utils.thrower;
@@ -79,7 +79,7 @@ class Promise<T> {
      * @param {PromiseCallback} onRejected callback to be called whenever promise fail
      * @returns {Promise} A chained Promise which handle error and fullfil
      */
-    public catch(onRejected): Promise<T> {
+    public catch<U>(onRejected: PromiseErrorCallback<U>): Promise<U> {
         return this.then(undefined, onRejected);
     }
 
@@ -88,7 +88,7 @@ class Promise<T> {
      * @param {any} value Value to resolve promise with
      * @returns {Promise} Resolved Promise
      */
-    static resolve<T>(value: T): Promise<T> {
+    static resolve<T>(value?: T|Thenable<T>): Promise<T> {
         var ctor = this,
             capability = abstract.newPromiseCapability(ctor);
 
