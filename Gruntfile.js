@@ -18,7 +18,8 @@ module.exports = function (grunt) {
         paths: {
             src: "src",
             polyfill: "polyfill",
-            build: "dist",
+            build: "build",
+            dist: "dist",
             lib: "lib",
             temp: ".temp",
             test: "tests"
@@ -36,6 +37,7 @@ module.exports = function (grunt) {
             src: {
                 src: "<%= paths.src %>/**/*.ts",
                 options: {
+                    declaration: true,
                     module: "commonjs",
                 }
             },
@@ -80,29 +82,40 @@ module.exports = function (grunt) {
             },
             polyfill: {
                 files: {
-                    "<%= paths.build %>/polyfill.js": ["<%= paths.polyfill %>/polyfill.ts"]
+                    "<%= paths.dist %>/polyfill.js": ["<%= paths.polyfill %>/polyfill.ts"]
                 }
             }
         },
 
         concat: {
             dist: {
-                src: ["<%= paths.src %>/*.js", "!**/*.tmpl.js"],
-                dest: "<%= paths.build %>/promizr.js"
+                src: "<%= paths.src %>/*.js",
+                dest: "<%= paths.dist %>/promizr.js"
+            },
+            decla: {
+                src: "<%= paths.src %>/*.d.ts",
+                dest: "<%= paths.dist %>/promizr.d.ts"
             }
         },
         
         wrapper: {
             dist: {
-                src: "<%= paths.build %>/promizr.js",
+                src: "<%= paths.dist %>/promizr.js",
                 options: {
-                    template: "<%= paths.src %>/umd.tmpl.js"
+                    template: "<%= paths.build %>/promizr.tmpl.js"
+                }
+            },
+            decla: {
+                src: "<%= paths.dist %>/promizr.d.ts",
+                options: {
+                    template: "<%= paths.build %>/decla.tmpl.d.ts",
+                    replacer: function(content) { return content.replace(new RegExp("(export )?declare", "g"), "export"); }
                 }
             },
             polyfill: {
-                src: "<%= paths.build %>/polyfill.js",
+                src: "<%= paths.dist %>/polyfill.js",
                 options: {
-                    template: "<%= paths.polyfill %>/umd.tmpl.js",
+                    template: "<%= paths.build %>/polyfill.tmpl.js",
                     derequire: true
                 }
             }
@@ -111,7 +124,7 @@ module.exports = function (grunt) {
         copy: {
             polyfill: {
                 src: "<%= paths.polyfill %>/promise.d.ts",
-                dest: "<%= paths.build %>/promise.d.ts"
+                dest: "<%= paths.dist %>/promise.d.ts"
             }
         },
 
@@ -123,7 +136,7 @@ module.exports = function (grunt) {
             base: ["*.js"],
             src: ["<%= paths.src %>/**/*.js"],
             polyfill: ["<%= paths.polyfill %>/**/*.js"],
-            dist: ["<%= paths.build %>/**/*.js", "!<%= paths.build %>/**/*.min.js"],
+            dist: ["<%= paths.dist %>/**/*.js", "!<%= paths.dist %>/**/*.min.js"],
             test: {
                 options: {
                     "-W030": true,
@@ -154,10 +167,12 @@ module.exports = function (grunt) {
 
         clean: {
             nuget: "nuget/*.nupkg",
+            src: [
+                "<%= paths.src %>/**/*.{d.ts,js,js.map}"
+            ],
             polyfill: [
                 "<%= paths.polyfill %>/**/*.{d.ts,js,js.map}",
-                "!<%= paths.polyfill %>/promise.d.ts",
-                "!<%= paths.polyfill %>/*.tmpl.js"
+                "!<%= paths.polyfill %>/promise.d.ts"
             ],
             test: [
                 "<%= paths.test %>/**/*.{d.ts,js,js.map}",
@@ -209,21 +224,11 @@ module.exports = function (grunt) {
             }
         }
     });
-    
-    grunt.registerTask("append-polyfill", function () {
-        var content = grunt.file.read("dist/polyfill.js"),
-            umd = grunt.file.read("polyfill/umd.tmpl.js");
-
-        umd = umd.replace("/*****************************CONTENT*****************************/", content);
-        umd = require("derequire")(umd, "_import", "require");
-
-        grunt.file.write("dist/polyfill.js", umd);
-    });
-    
 
     grunt.registerMultiTask("wrapper", function () {
         var options = this.options({
             token: "/*****************************CONTENT*****************************/",
+            replacer: false,
             derequire: false
         });
 
@@ -237,12 +242,13 @@ module.exports = function (grunt) {
                 var content = grunt.file.read(src),
                     tmpl = grunt.file.read(options.template);
 
-                tmpl = tmpl.replace(options.token, content);
-                if (options.derequire) {
-                    tmpl = require("derequire")(tmpl, "_import", "require");
-                }
+                if (options.derequire)
+                    content = require("derequire")(content, "_import", "require");
 
-                grunt.file.write(src, tmpl);
+                if (options.replacer) 
+                    content = options.replacer(content);
+
+                grunt.file.write(src, tmpl.replace(options.token, content));
                 grunt.log.ok("File '" + src + "' wrapped using template '" + options.template + "'");
             });
         });
@@ -252,8 +258,8 @@ module.exports = function (grunt) {
     grunt.registerTask("dev", ["tslint:app", "typescript:dev"]);
     grunt.registerTask("dev-polyfill", ["tslint:polyfill", "typescript:polyfill"]);
 
-    grunt.registerTask("polyfill", ["tslint:polyfill", "browserify:polyfill", "wrapper:polyfill", "copy:polyfill"]);
-    grunt.registerTask("promizr", ["tslint:src", "typescript:src", "concat:dist", "wrapper:dist"]);
+    grunt.registerTask("polyfill", ["tslint:polyfill", "browserify:polyfill", "wrapper:polyfill", "copy:polyfill", "clean:polyfill"]);
+    grunt.registerTask("promizr", ["tslint:src", "typescript:src", "concat:dist", "wrapper:dist", "concat:decla", "wrapper:decla", "clean:src"]);
     grunt.registerTask("build", ["polyfill", "promizr"]);
     
     grunt.registerTask("test-polyfill", ["dev-polyfill", "tslint:test", "typescript:test", "jshint:test", "mocha:test", "clean:polyfill", "clean:test"]);

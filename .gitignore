@@ -12,7 +12,6 @@
 [Dd]ebug/
 [Rr]elease/
 x64/
-build/
 [Bb]in/
 [Oo]bj/
 nuget/*.nupkg
@@ -26,10 +25,11 @@ typings/
 *.js.map
 *.d.ts
 *.js
-!*.tmpl.js
+!build/*.*
 !_definitions.d.ts
 !Gruntfile.js
 !dist/*.js
+!dist/*.d.ts
 !polyfill/promise.d.ts
 !src/base.d.ts
 !tests/tests.d.ts
