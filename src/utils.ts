@@ -230,6 +230,17 @@ export function uncallbackify<T>(...args: any[]): Promise<T> {
     });
 }
 
+export function defer<T>(): PromiseCapability<T> {
+    var dfd = { resolve: null, reject: null, promise: null };
+
+    dfd.promise = new Promise((resolve, reject) => {
+        dfd.resolve = resolve;
+        dfd.reject = reject;
+    });
+
+    return dfd;
+};
+
 export function polyfill(): typeof Promise {
     if (typeof process === "undefined" || {}.toString.call(process) !== "[object process]") {
         throw new Error("This method is only available in Node.JS environment");
