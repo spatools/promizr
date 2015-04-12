@@ -306,8 +306,13 @@ export function every<T>(array: T[], iterator: PromiseListIterator<T, boolean>):
  * There is no guarantee that the results array will be returned in the original order of  array  passed to the  iterator  function.
  */
 export function concat<T, U>(array: T[], iterator: PromiseListIterator<T, U[]>): Promise<U[]> {
-    return map(array, iterator)
-        .then(results => Array.prototype.concat.apply([], results.filter(a => !!a)));
+    var results: U[] = [];
+
+    var promises = array.map((value, index) => iterator(value, index, array).then(res => {
+        results = results.concat(res || []);
+    }));
+
+    return Promise.all(promises).then(() => results);
 }
 
 /**

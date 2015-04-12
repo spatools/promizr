@@ -852,7 +852,7 @@ describe("Promizr Collections Methods", () => {
 
     });
 
-    describe("every",() => {
+    describe("every", () => {
 
         it("should call each provided methods with given values in parallel", done => {
             var spy = sinon.spy(num => true),
@@ -927,6 +927,122 @@ describe("Promizr Collections Methods", () => {
                 sinon.assert.calledWithExactly(iterator, list[1], 1, list);
                 sinon.assert.calledWithExactly(iterator, list[2], 2, list);
             }).then(done, done);
+        });
+
+    });
+
+    describe("concat", () => {
+
+        describe("parallel function", () => {
+
+            it("should call each provided methods with given values in parallel", done => {
+                var spy = sinon.spy(num => [num]),
+                    iterator = num => promizr.timeout(num).then(() => spy(num));
+
+                promizr.concat(list, iterator).then(results => {
+                    sinon.assert.calledThrice(spy);
+
+                    spy.getCall(0).args[0].should.equal(list[1]);
+                    spy.getCall(1).args[0].should.equal(list[2]);
+                    spy.getCall(2).args[0].should.equal(list[0]);
+                }).then(done, done);
+            });
+
+            it("should return flattened array with arrays returned by iterator", done => {
+                var spy = sinon.spy(num => [num]),
+                    iterator = num => promizr.timeout(num).then(() => spy(num));
+
+                promizr.concat(list, iterator).then(results => {
+                    sinon.assert.calledThrice(spy);
+
+                    results.length.should.equal(3);
+                    results[0].should.equal(list[1]);
+                    results[1].should.equal(list[2]);
+                    results[2].should.equal(list[0]);
+                }).then(done, done);
+            });
+
+            it("should stop if an iterator throws", done => {
+                var spy = sinon.spy(num => [num]),
+                    err = new Error("test"),
+
+                    iterator = sinon.spy(num => {
+                        return promizr.timeout(num).then(() => {
+                            if (num === list[2]) {
+                                return Promise.reject(err);
+                            }
+
+                            spy(num);
+                        });
+                    });
+
+                promizr.concat(list, iterator).catch<void>(e => {
+                    e.should.equal(err);
+
+                    sinon.assert.calledOnce(spy);
+                    sinon.assert.calledWithExactly(spy, list[1]);
+
+                    sinon.assert.calledThrice(iterator);
+                    sinon.assert.calledWithExactly(iterator, list[0], 0, list);
+                    sinon.assert.calledWithExactly(iterator, list[1], 1, list);
+                    sinon.assert.calledWithExactly(iterator, list[2], 2, list);
+                }).then(done, done);
+            });
+
+        });
+
+        describe("series function", () => {
+
+            it("should call each provided methods with given values in series", done => {
+                var spy = sinon.spy(num => [num]),
+                    iterator = num => promizr.timeout(num).then(() => spy(num));
+
+                promizr.concatSeries(list, iterator).then(() => {
+                    sinon.assert.calledThrice(spy);
+
+                    spy.getCall(0).args[0].should.equal(list[0]);
+                    spy.getCall(1).args[0].should.equal(list[1]);
+                    spy.getCall(2).args[0].should.equal(list[2]);
+                }).then(done, done);
+            });
+
+            it("should return array with given values filtered by iterator", done => {
+                var spy = sinon.spy(num => [num]),
+                    iterator = num => promizr.timeout(num).then(() => spy(num));
+
+                promizr.concatSeries(list, iterator).then(results => {
+                    sinon.assert.calledThrice(spy);
+
+                    results.length.should.equal(3);
+                    results[0].should.equal(list[0]);
+                    results[1].should.equal(list[1]);
+                    results[2].should.equal(list[2]);
+                }).then(done, done);
+            });
+
+            it("should stop if an iterator throws", done => {
+                var spy = sinon.spy(num => [num]),
+                    err = new Error("test"),
+                    iterator = sinon.spy(num => {
+                        if (num === list[1]) {
+                            return Promise.reject(err);
+                        }
+
+                        return promizr.timeout(num).then(() => spy(num));
+                    });
+
+                promizr.concatSeries(list, iterator).catch<void>(e => {
+                    e.should.equal(err);
+
+                    sinon.assert.calledOnce(spy);
+                    sinon.assert.calledWithExactly(spy, list[0]);
+
+                    sinon.assert.calledTwice(iterator);
+                    sinon.assert.calledWithExactly(iterator, list[0], 0, list);
+                    sinon.assert.calledWithExactly(iterator, list[1], 1, list);
+                }).then(done, done);
+            });
+
         });
 
     });
