@@ -33,22 +33,25 @@ module.exports = function (grunt) {
                 declaration: false,
                 removeComments: true
             },
-            dev: {
+            src: {
                 src: "<%= paths.src %>/**/*.ts",
                 options: {
-                    sourceMap: true,
-                    removeComments: true
+                    module: "commonjs",
                 }
             },
             polyfill: {
                 src: "<%= paths.polyfill %>/**/*.ts",
                 options: {
                     sourceMap: true,
-                    removeComments: true
+                    removeComments: false
                 }
             },
             test: {
-                src: "<%= paths.test %>/**/*.ts"
+                src: "<%= paths.test %>/**/*.ts",
+                options: {
+                    sourceMap: true,
+                    removeComments: false
+                }
             },
             node: {
                 src: "<%= paths.src %>/**/*.ts",
@@ -82,6 +85,29 @@ module.exports = function (grunt) {
             }
         },
 
+        concat: {
+            dist: {
+                src: ["<%= paths.src %>/*.js", "!**/*.tmpl.js"],
+                dest: "<%= paths.build %>/promizr.js"
+            }
+        },
+        
+        wrapper: {
+            dist: {
+                src: "<%= paths.build %>/promizr.js",
+                options: {
+                    template: "<%= paths.src %>/umd.tmpl.js"
+                }
+            },
+            polyfill: {
+                src: "<%= paths.build %>/polyfill.js",
+                options: {
+                    template: "<%= paths.polyfill %>/umd.tmpl.js",
+                    derequire: true
+                }
+            }
+        },
+
         copy: {
             polyfill: {
                 src: "<%= paths.polyfill %>/promise.d.ts",
@@ -95,7 +121,7 @@ module.exports = function (grunt) {
             },
 
             base: ["*.js"],
-            dev: ["<%= paths.src %>/**/*.js"],
+            src: ["<%= paths.src %>/**/*.js"],
             polyfill: ["<%= paths.polyfill %>/**/*.js"],
             dist: ["<%= paths.build %>/**/*.js", "!<%= paths.build %>/**/*.min.js"],
             test: {
@@ -110,6 +136,9 @@ module.exports = function (grunt) {
         tslint: {
             options: {
                 configuration: grunt.file.readJSON("tslint.json")
+            },
+            src: {
+                src: "<%= paths.src %>/**/*.ts"
             },
             polyfill: {
                 src: "<%= paths.polyfill %>/**/*.ts"
@@ -190,12 +219,42 @@ module.exports = function (grunt) {
 
         grunt.file.write("dist/polyfill.js", umd);
     });
+    
 
-    grunt.registerTask("dev", ["tslint:app", "typescript:dev", "jshint:dev"]);
-    grunt.registerTask("dev-polyfill", ["tslint:polyfill", "typescript:polyfill", "jshint:polyfill"]);
+    grunt.registerMultiTask("wrapper", function () {
+        var options = this.options({
+            token: "/*****************************CONTENT*****************************/",
+            derequire: false
+        });
 
-    grunt.registerTask("polyfill", ["tslint:polyfill", "browserify:polyfill", "append-polyfill", "copy:polyfill"]);
-    grunt.registerTask("build", ["tslint:app", "typescript:dist", "jshint:dist", "requirejs", "typescript:node", "jshint:node"]);
+        if (!options.template) {
+            grunt.log.error().error("A template option must be provided");
+            return;
+        }
+
+        this.files.forEach(function (f) {
+            f.src.forEach(function (src) {
+                var content = grunt.file.read(src),
+                    tmpl = grunt.file.read(options.template);
+
+                tmpl = tmpl.replace(options.token, content);
+                if (options.derequire) {
+                    tmpl = require("derequire")(tmpl, "_import", "require");
+                }
+
+                grunt.file.write(src, tmpl);
+                grunt.log.ok("File '" + src + "' wrapped using template '" + options.template + "'");
+            });
+        });
+        
+    });
+
+    grunt.registerTask("dev", ["tslint:app", "typescript:dev"]);
+    grunt.registerTask("dev-polyfill", ["tslint:polyfill", "typescript:polyfill"]);
+
+    grunt.registerTask("polyfill", ["tslint:polyfill", "browserify:polyfill", "wrapper:polyfill", "copy:polyfill"]);
+    grunt.registerTask("promizr", ["tslint:src", "typescript:src", "concat:dist", "wrapper:dist"]);
+    grunt.registerTask("build", ["polyfill", "promizr"]);
     
     grunt.registerTask("test-polyfill", ["dev-polyfill", "tslint:test", "typescript:test", "jshint:test", "mocha:test", "clean:polyfill", "clean:test"]);
     grunt.registerTask("btest-polyfill", ["dev-polyfill", "tslint:test", "typescript:test", "jshint:test", "connect:test"]);
