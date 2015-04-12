@@ -23,4 +23,12 @@ interface PromiseListIterator<T, U> {
     (item: T, index: number, list: T[]): Promise<U>;
 }
 
+interface PromiseTaskExecutorObject<T> {
+    [key: string]: () => Promise<T>
+}
+
+interface PromiseSeriesObjectResult<T> {
+    [key: string]: T
+}
+
 declare var nextTick: (cb: Function) => void;

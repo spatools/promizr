@@ -86,12 +86,6 @@ export function parallel<T>(tasks: PromiseTaskExecutor<T>[]|PromiseTaskExecutorO
         objectParallel(<PromiseTaskExecutorObject<T>>tasks);
 }
 
-export function parallelLimit<T>(tasks: PromiseTaskExecutor<T>[], limit: number): Promise<T[]>;
-export function parallelLimit<T>(tasks: PromiseTaskExecutorObject<T>, limit: number): Promise<PromiseSeriesObjectResult<T>>;
-export function parallelLimit<T>(tasks: PromiseTaskExecutor<T>[]|PromiseTaskExecutorObject<T>, limit: number): Promise<T[]|PromiseSeriesObjectResult<T>> {
-    return Promise.reject("not implemented");
-}
-
 
 export function whilst<T>(test: () => boolean, task: PromiseTaskExecutor<T>): Promise<void> {
     function next(): Promise<void> {

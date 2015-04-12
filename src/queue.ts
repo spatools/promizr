@@ -315,3 +315,23 @@ export function mapLimit<T, U>(array: T[], limit: number, iterator: PromiseListI
     var iterators = array.map<PromiseTaskExecutor<U>>((value, index, list) => () => iterator(value, index, list));
     return taskQueue<U>(limit).push(iterators);
 }
+
+export function parallelLimit<T>(tasks: PromiseTaskExecutor<T>[], limit: number): Promise<T[]>;
+export function parallelLimit<T>(tasks: PromiseTaskExecutorObject<T>, limit: number): Promise<PromiseSeriesObjectResult<T>>;
+export function parallelLimit<T>(tasks: PromiseTaskExecutor<T>[]|PromiseTaskExecutorObject<T>, limit: number): Promise<T[]|PromiseSeriesObjectResult<T>> {
+    if (Array.isArray(tasks)) {
+        return taskQueue<T>(limit).push(<PromiseTaskExecutor<T>[]>tasks);
+    }
+
+    var obj = <PromiseTaskExecutorObject<T>>tasks,
+        data = Object.keys(obj),
+        result: any = {};
+
+    function worker(key: string): Promise<void> {
+        return obj[key]().then(res => {
+            result[key] = res;
+        });
+    }
+
+    return queue(worker, limit).push(data).then(() => result);
+}
