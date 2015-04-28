@@ -15,8 +15,7 @@ interface RequireDefine {
 declare var Uint8ClampedArray: any;
 
 interface PromiseTaskExecutor<T> {
-    (): Promise<T>
-    (...args: any[]): Promise<T>
+    (...args: any[]): Promise<T>;
 }
 
 interface PromiseListIterator<T, U> {

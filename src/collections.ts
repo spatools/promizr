@@ -2,8 +2,7 @@
 
 /** A function that return a Promise */
 export interface PromiseTaskExecutor<T> {
-    (): Promise<T>
-    (...args: any[]): Promise<T>
+    (...args: any[]): Promise<T>;
 }
 
 /** Base List Iterator for promizr */

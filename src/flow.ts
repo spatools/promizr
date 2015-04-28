@@ -133,15 +133,15 @@ export function doUntil<T>(task: PromiseTaskExecutor<T>, test: (res?: T) => bool
 }
 
 
-export function forever<T>(tasks: PromiseTaskExecutor<T>): Promise<void> {
+export function forever<T>(task: PromiseTaskExecutor<T>): Promise<void> {
     function next(): Promise<void> {
-        return tasks().then(next);
+        return task().then(next);
     }
 
     return Promise.resolve().then(next);
 }
 
-export function waterfall<T>(tasks: (val?: any) => Promise<any>): Promise<T> {
+export function waterfall<T>(tasks: PromiseTaskExecutor<any>[]): Promise<T> {
     var p = Promise.resolve(),
         i = 0, len = tasks.length;
 
@@ -155,8 +155,12 @@ export function waterfall<T>(tasks: (val?: any) => Promise<any>): Promise<T> {
 
 export function compose<T>(...tasks: PromiseTaskExecutor<any>[]): PromiseTaskExecutor<T> {
     return function () {
-        var p = tasks.pop().apply(this, arguments),
+        var p = Promise.resolve(),
+            last = tasks.pop(),
+            self = this, args = arguments,
             i = tasks.length - 1;
+
+        p = p.then(() => last.apply(self, args));
 
         for (; i >= 0; i--) {
             p = p.then(tasks[i]);
@@ -168,8 +172,12 @@ export function compose<T>(...tasks: PromiseTaskExecutor<any>[]): PromiseTaskExe
 
 export function seq<T>(...tasks: PromiseTaskExecutor<any>[]): PromiseTaskExecutor<T> {
     return function () {
-        var p = tasks.shift().apply(this, arguments),
+        var p = Promise.resolve(),
+            first = tasks.shift(),
+            self = this, args = arguments,
             i = 0, len = tasks.length;
+
+        p = p.then(() => first.apply(self, args));
 
         for (; i < len; i++) {
             p = p.then(tasks[i]);
@@ -181,12 +189,13 @@ export function seq<T>(...tasks: PromiseTaskExecutor<any>[]): PromiseTaskExecuto
 
 export function applyEach<T>(tasks: PromiseTaskExecutor<T>[], ...args: any[]): PromiseTaskExecutor<T[]>|Promise<T[]> {
     if (args.length > 0) {
-        tasks = tasks.map(e => e.bind.apply(e, [null].concat(args)));
+        tasks = tasks.map(e => () => e.apply(null, args));
         return parallel(tasks);
     }
     else {
         return function () {
-            tasks = tasks.map(e => e.bind.apply(e, [this].concat(arguments)));
+            var args = arguments;
+            tasks = tasks.map(e => () => e.apply(this, args));
             return parallel(tasks);
         };
     }
@@ -194,12 +203,13 @@ export function applyEach<T>(tasks: PromiseTaskExecutor<T>[], ...args: any[]): P
 
 export function applyEachSeries<T>(tasks: PromiseTaskExecutor<T>[], ...args: any[]): PromiseTaskExecutor<T[]>|Promise<T[]> {
     if (args.length > 0) {
-        tasks = tasks.map(e => e.bind.apply(e, [null].concat(args)));
+        tasks = tasks.map(e => () => e.apply(null, args));
         return series(tasks);
     }
     else {
         return function () {
-            tasks = tasks.map(e => e.bind.apply(e, [this].concat(arguments)));
+            var args = arguments;
+            tasks = tasks.map(e => () => e.apply(this, args));
             return series(tasks);
         };
     }
@@ -207,11 +217,18 @@ export function applyEachSeries<T>(tasks: PromiseTaskExecutor<T>[], ...args: any
 
 
 export function retry<T>(times: number, task: PromiseTaskExecutor<T>): Promise<T> {
-    var retries = 0;
+    var promise;
 
-    return task().catch(err => {
-        if (retries++ < times) {
-            return task();
+    try {
+        promise = Promise.resolve(task());
+    }
+    catch (e) {
+        promise = Promise.reject(e);
+    }
+
+    return promise.catch(err => {
+        if (times > 1) {
+            return retry(times - 1, task);
         }
 
         throw err;
@@ -223,7 +240,12 @@ export function times<T>(times: number, task: PromiseTaskExecutor<T>): Promise<T
         i = times;
 
     for (; i > 0; i--) {
-        results.push(task());
+        try {
+            results.push(task());
+        }
+        catch (e) {
+            results.push(Promise.reject(e));
+        }
     }
 
     return Promise.all(results);
@@ -234,7 +256,7 @@ export function timesSeries<T>(times: number, task: PromiseTaskExecutor<T>): Pro
         i = times;
 
     function capture() {
-        return task().then(result => { results.push(result); });
+        return Promise.resolve(task()).then(result => { results.push(result); });
     }
 
     for (; i > 0; i--) {
