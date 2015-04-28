@@ -283,9 +283,9 @@ function doUntil(task, test) {
     return Promise.resolve().then(next);
 }
 exports.doUntil = doUntil;
-function forever(tasks) {
+function forever(task) {
     function next() {
-        return tasks().then(next);
+        return task().then(next);
     }
     return Promise.resolve().then(next);
 }
@@ -304,7 +304,8 @@ function compose() {
         tasks[_i - 0] = arguments[_i];
     }
     return function () {
-        var p = tasks.pop().apply(this, arguments), i = tasks.length - 1;
+        var p = Promise.resolve(), last = tasks.pop(), self = this, args = arguments, i = tasks.length - 1;
+        p = p.then(function () { return last.apply(self, args); });
         for (; i >= 0; i--) {
             p = p.then(tasks[i]);
         }
@@ -318,7 +319,8 @@ function seq() {
         tasks[_i - 0] = arguments[_i];
     }
     return function () {
-        var p = tasks.shift().apply(this, arguments), i = 0, len = tasks.length;
+        var p = Promise.resolve(), first = tasks.shift(), self = this, args = arguments, i = 0, len = tasks.length;
+        p = p.then(function () { return first.apply(self, args); });
         for (; i < len; i++) {
             p = p.then(tasks[i]);
         }
@@ -332,13 +334,14 @@ function applyEach(tasks) {
         args[_i - 1] = arguments[_i];
     }
     if (args.length > 0) {
-        tasks = tasks.map(function (e) { return e.bind.apply(e, [null].concat(args)); });
+        tasks = tasks.map(function (e) { return function () { return e.apply(null, args); }; });
         return parallel(tasks);
     }
     else {
         return function () {
             var _this = this;
-            tasks = tasks.map(function (e) { return e.bind.apply(e, [_this].concat(arguments)); });
+            var args = arguments;
+            tasks = tasks.map(function (e) { return function () { return e.apply(_this, args); }; });
             return parallel(tasks);
         };
     }
@@ -350,23 +353,30 @@ function applyEachSeries(tasks) {
         args[_i - 1] = arguments[_i];
     }
     if (args.length > 0) {
-        tasks = tasks.map(function (e) { return e.bind.apply(e, [null].concat(args)); });
+        tasks = tasks.map(function (e) { return function () { return e.apply(null, args); }; });
         return series(tasks);
     }
     else {
         return function () {
             var _this = this;
-            tasks = tasks.map(function (e) { return e.bind.apply(e, [_this].concat(arguments)); });
+            var args = arguments;
+            tasks = tasks.map(function (e) { return function () { return e.apply(_this, args); }; });
             return series(tasks);
         };
     }
 }
 exports.applyEachSeries = applyEachSeries;
 function retry(times, task) {
-    var retries = 0;
-    return task().catch(function (err) {
-        if (retries++ < times) {
-            return task();
+    var promise;
+    try {
+        promise = Promise.resolve(task());
+    }
+    catch (e) {
+        promise = Promise.reject(e);
+    }
+    return promise.catch(function (err) {
+        if (times > 1) {
+            return retry(times - 1, task);
         }
         throw err;
     });
@@ -375,7 +385,12 @@ exports.retry = retry;
 function times(times, task) {
     var results = [], i = times;
     for (; i > 0; i--) {
-        results.push(task());
+        try {
+            results.push(task());
+        }
+        catch (e) {
+            results.push(Promise.reject(e));
+        }
     }
     return Promise.all(results);
 }
@@ -383,7 +398,7 @@ exports.times = times;
 function timesSeries(times, task) {
     var p = Promise.resolve(), results = [], i = times;
     function capture() {
-        return task().then(function (result) {
+        return Promise.resolve(task()).then(function (result) {
             results.push(result);
         });
     }

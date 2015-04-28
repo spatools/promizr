@@ -3,7 +3,6 @@
 declare module promizr {
 /// <reference path="../_definitions.d.ts" />
 export interface PromiseTaskExecutor<T> {
-    (): Promise<T>;
     (...args: any[]): Promise<T>;
 }
 export interface PromiseListIterator<T, U> {
@@ -45,8 +44,8 @@ export function whilst<T>(test: () => boolean, task: PromiseTaskExecutor<T>): Pr
 export function doWhilst<T>(executor: PromiseTaskExecutor<T>, test: (res?: T) => boolean): Promise<void>;
 export function until<T>(test: () => boolean, task: PromiseTaskExecutor<T>): Promise<void>;
 export function doUntil<T>(task: PromiseTaskExecutor<T>, test: (res?: T) => boolean): Promise<void>;
-export function forever<T>(tasks: PromiseTaskExecutor<T>): Promise<void>;
-export function waterfall<T>(tasks: (val?: any) => Promise<any>): Promise<T>;
+export function forever<T>(task: PromiseTaskExecutor<T>): Promise<void>;
+export function waterfall<T>(tasks: PromiseTaskExecutor<any>[]): Promise<T>;
 export function compose<T>(...tasks: PromiseTaskExecutor<any>[]): PromiseTaskExecutor<T>;
 export function seq<T>(...tasks: PromiseTaskExecutor<any>[]): PromiseTaskExecutor<T>;
 export function applyEach<T>(tasks: PromiseTaskExecutor<T>[], ...args: any[]): PromiseTaskExecutor<T[]> | Promise<T[]>;
