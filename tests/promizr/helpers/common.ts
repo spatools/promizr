@@ -24,6 +24,8 @@ if (!Function.prototype.bind) {
     };
 }
 
+export var testError = new Error("test");
+
 export function isUndefined(x: any): boolean {
     return typeof x === "undefined";
 }
@@ -40,4 +42,16 @@ export function cleanSpy(spy: SinonSpy) {
 
         spy.reset();
     }
+}
+
+export type StringOrNumber = string | number;
+
+export function createExecutorObject<T extends StringOrNumber, U>(list: T[], mapper: (key: T) => () => Promise<U>): promizr.PromiseTaskExecutorObject<U> {
+    var result: promizr.PromiseTaskExecutorObject<U> = {};
+
+    list.forEach(val => {
+        result[val.toString()] = mapper(val);
+    });
+
+    return result;
 }

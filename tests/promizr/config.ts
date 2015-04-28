@@ -25,7 +25,7 @@ requirejs.config({
 
 var tests = [
     "collections",
-    //"flow",
+    "flow",
     //"nextTick",
     //"queue",
     //"utils"
