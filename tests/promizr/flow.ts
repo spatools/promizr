@@ -3,7 +3,8 @@
 import promizr = require("promizr");
 import common = require("./helpers/common");
 
-var list = [15, 1, 8];
+var list = [15, 1, 8],
+    stopList = [251, 1, 50];
 
 describe("Promizr Flow Methods", () => {
 
@@ -72,9 +73,10 @@ describe("Promizr Flow Methods", () => {
                 promizr.series(executors).then(() => {
                     sinon.assert.calledThrice(spy);
 
-                    spy.getCall(0).args[0].should.equal(list[1]);
-                    spy.getCall(1).args[0].should.equal(list[2]);
-                    spy.getCall(2).args[0].should.equal(list[0]);
+                    sinon.assert.calledWithExactly(spy, list[0]);
+                    sinon.assert.calledWithExactly(spy, list[1]);
+                    sinon.assert.calledWithExactly(spy, list[2]);
+
                 }).then(done, done);
             });
 
@@ -94,9 +96,10 @@ describe("Promizr Flow Methods", () => {
 
             it("should stop if an executor throws", done => {
                 var spy = sinon.spy(),
+                    count = 0,
 
                     executors = common.createExecutorObject(list, num => sinon.spy(() => {
-                        if (num === list[2]) {
+                        if (count++ > 0) {
                             return Promise.reject(common.testError);
                         }
 
@@ -105,13 +108,7 @@ describe("Promizr Flow Methods", () => {
 
                 promizr.series(executors).catch<void>(e => {
                     e.should.equal(common.testError);
-
                     sinon.assert.calledOnce(spy);
-                    sinon.assert.calledWithExactly(spy, list[1]);
-
-                    sinon.assert.calledOnce(<SinonSpy>executors[list[1].toString()]);
-                    sinon.assert.calledOnce(<SinonSpy>executors[list[2].toString()]);
-                    sinon.assert.notCalled(<SinonSpy>executors[list[0].toString()]);
                 }).then(done, done);
             });
 
@@ -153,9 +150,9 @@ describe("Promizr Flow Methods", () => {
             it("should stop if an executor throws", done => {
                 var spy = sinon.spy(),
 
-                    executors = list.map(num => sinon.spy(() => {
+                    executors = stopList.map(num => sinon.spy(() => {
                         return promizr.timeout(num).then(() => {
-                            if (num === list[2]) {
+                            if (num === stopList[2]) {
                                 return Promise.reject(common.testError);
                             }
 
@@ -167,7 +164,7 @@ describe("Promizr Flow Methods", () => {
                     e.should.equal(common.testError);
 
                     sinon.assert.calledOnce(spy);
-                    sinon.assert.calledWithExactly(spy, list[1]);
+                    sinon.assert.calledWithExactly(spy, stopList[1]);
 
                     sinon.assert.calledOnce(executors[0]);
                     sinon.assert.calledOnce(executors[1]);
@@ -209,9 +206,9 @@ describe("Promizr Flow Methods", () => {
             it("should stop if an executor throws", done => {
                 var spy = sinon.spy(),
 
-                    executors = common.createExecutorObject(list, num => sinon.spy(() => {
+                    executors = common.createExecutorObject(stopList, num => sinon.spy(() => {
                         return promizr.timeout(num).then(() => {
-                            if (num === list[2]) {
+                            if (num === stopList[2]) {
                                 return Promise.reject(common.testError);
                             }
 
@@ -223,11 +220,11 @@ describe("Promizr Flow Methods", () => {
                     e.should.equal(common.testError);
 
                     sinon.assert.calledOnce(spy);
-                    sinon.assert.calledWithExactly(spy, list[1]);
+                    sinon.assert.calledWithExactly(spy, stopList[1]);
 
-                    sinon.assert.calledOnce(<SinonSpy>executors[list[0].toString()]);
-                    sinon.assert.calledOnce(<SinonSpy>executors[list[1].toString()]);
-                    sinon.assert.calledOnce(<SinonSpy>executors[list[2].toString()]);
+                    sinon.assert.calledOnce(<SinonSpy>executors[stopList[0].toString()]);
+                    sinon.assert.calledOnce(<SinonSpy>executors[stopList[1].toString()]);
+                    sinon.assert.calledOnce(<SinonSpy>executors[stopList[2].toString()]);
                 }).then(done, done);
             });
 
@@ -780,9 +777,9 @@ describe("Promizr Flow Methods", () => {
             it("should stop if an executor throws", done => {
                 var spy = sinon.spy(),
 
-                    executors = list.map(num => sinon.spy(() => {
+                    executors = stopList.map(num => sinon.spy(() => {
                         return promizr.timeout(num).then(() => {
-                            if (num === list[2]) {
+                            if (num === stopList[2]) {
                                 return Promise.reject(common.testError);
                             }
 
@@ -790,11 +787,11 @@ describe("Promizr Flow Methods", () => {
                         });
                     }));
 
-                (<Promise<any>>promizr.applyEach(executors, list)).catch<void>(e => {
+                (<Promise<any>>promizr.applyEach(executors, stopList)).catch<void>(e => {
                     e.should.equal(common.testError);
 
                     sinon.assert.calledOnce(spy);
-                    sinon.assert.calledWithExactly(spy, list[1]);
+                    sinon.assert.calledWithExactly(spy, stopList[1]);
 
                     sinon.assert.calledOnce(executors[0]);
                     sinon.assert.calledOnce(executors[1]);
@@ -991,11 +988,11 @@ describe("Promizr Flow Methods", () => {
         it("should stop if a task throws", done => {
             var count = 0,
                 spy = sinon.spy(),
- 
+
                 task = sinon.spy(() => {
-                    var num = list[count++];
+                    var num = stopList[count++];
                     return promizr.timeout(num).then(() => {
-                        if (num === list[2]) {
+                        if (num === stopList[2]) {
                             return Promise.reject(common.testError);
                         }
 
@@ -1007,7 +1004,7 @@ describe("Promizr Flow Methods", () => {
                 e.should.equal(common.testError);
 
                 sinon.assert.calledOnce(spy);
-                sinon.assert.calledWithExactly(spy, list[1]);
+                sinon.assert.calledWithExactly(spy, stopList[1]);
 
                 sinon.assert.calledThrice(task);
             }).then(done, done);
@@ -1015,7 +1012,7 @@ describe("Promizr Flow Methods", () => {
 
     });
 
-    describe("timesSeries function",() => {
+    describe("timesSeries function", () => {
 
         it("should call provided function a given number of times", done => {
             var count = 0,

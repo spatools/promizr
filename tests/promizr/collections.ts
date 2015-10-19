@@ -4,8 +4,9 @@ import promizr = require("promizr");
 import common = require("./helpers/common");
 
 var list = [15, 1, 8],
+    stopList = [251, 1, 50],
 
-    reduceTotal = 25,
+    reduceTotal = list[0] + list[1] + list[2] + 1,
     reduceResult = 1;
 
 describe("Promizr Collections Methods", () => {
@@ -33,7 +34,7 @@ describe("Promizr Collections Methods", () => {
 
                     iterator = sinon.spy(num => {
                         return promizr.timeout(num).then(() => {
-                            if (num === list[2]) {
+                            if (num === stopList[2]) {
                                 return Promise.reject(err);
                             }
 
@@ -41,16 +42,16 @@ describe("Promizr Collections Methods", () => {
                         });
                     });
 
-                promizr.each(list, iterator).catch<void>(e => {
+                promizr.each(stopList, iterator).catch<void>(e => {
                     e.should.equal(err);
 
                     sinon.assert.calledOnce(spy);
-                    sinon.assert.calledWithExactly(spy, list[1]);
+                    sinon.assert.calledWithExactly(spy, stopList[1]);
 
                     sinon.assert.calledThrice(iterator);
-                    sinon.assert.calledWithExactly(iterator, list[0], 0, list);
-                    sinon.assert.calledWithExactly(iterator, list[1], 1, list);
-                    sinon.assert.calledWithExactly(iterator, list[2], 2, list);
+                    sinon.assert.calledWithExactly(iterator, stopList[0], 0, stopList);
+                    sinon.assert.calledWithExactly(iterator, stopList[1], 1, stopList);
+                    sinon.assert.calledWithExactly(iterator, stopList[2], 2, stopList);
                 }).then(done, done);
             });
 
@@ -136,7 +137,7 @@ describe("Promizr Collections Methods", () => {
 
                     iterator = sinon.spy(num => {
                         return promizr.timeout(num).then(() => {
-                            if (num === list[2]) {
+                            if (num === stopList[2]) {
                                 return Promise.reject(err);
                             }
 
@@ -144,16 +145,16 @@ describe("Promizr Collections Methods", () => {
                         });
                     });
 
-                promizr.map(list, iterator).catch<void>(e => {
+                promizr.map(stopList, iterator).catch<void>(e => {
                     e.should.equal(err);
 
                     sinon.assert.calledOnce(spy);
-                    sinon.assert.calledWithExactly(spy, list[1]);
+                    sinon.assert.calledWithExactly(spy, stopList[1]);
 
                     sinon.assert.calledThrice(iterator);
-                    sinon.assert.calledWithExactly(iterator, list[0], 0, list);
-                    sinon.assert.calledWithExactly(iterator, list[1], 1, list);
-                    sinon.assert.calledWithExactly(iterator, list[2], 2, list);
+                    sinon.assert.calledWithExactly(iterator, stopList[0], 0, stopList);
+                    sinon.assert.calledWithExactly(iterator, stopList[1], 1, stopList);
+                    sinon.assert.calledWithExactly(iterator, stopList[2], 2, stopList);
                 }).then(done, done);
             });
 
@@ -251,7 +252,7 @@ describe("Promizr Collections Methods", () => {
 
                     iterator = sinon.spy(num => {
                         return promizr.timeout(num).then(() => {
-                            if (num === list[2]) {
+                            if (num === stopList[2]) {
                                 return Promise.reject(err);
                             }
 
@@ -259,16 +260,16 @@ describe("Promizr Collections Methods", () => {
                         });
                     });
 
-                promizr.filter(list, iterator).catch<void>(e => {
+                promizr.filter(stopList, iterator).catch<void>(e => {
                     e.should.equal(err);
 
                     sinon.assert.calledOnce(spy);
-                    sinon.assert.calledWithExactly(spy, list[1]);
+                    sinon.assert.calledWithExactly(spy, stopList[1]);
 
                     sinon.assert.calledThrice(iterator);
-                    sinon.assert.calledWithExactly(iterator, list[0], 0, list);
-                    sinon.assert.calledWithExactly(iterator, list[1], 1, list);
-                    sinon.assert.calledWithExactly(iterator, list[2], 2, list);
+                    sinon.assert.calledWithExactly(iterator, stopList[0], 0, stopList);
+                    sinon.assert.calledWithExactly(iterator, stopList[1], 1, stopList);
+                    sinon.assert.calledWithExactly(iterator, stopList[2], 2, stopList);
                 }).then(done, done);
             });
 
@@ -365,7 +366,7 @@ describe("Promizr Collections Methods", () => {
 
                     iterator = sinon.spy(num => {
                         return promizr.timeout(num).then(() => {
-                            if (num === list[2]) {
+                            if (num === stopList[2]) {
                                 return Promise.reject(err);
                             }
 
@@ -373,16 +374,16 @@ describe("Promizr Collections Methods", () => {
                         });
                     });
 
-                promizr.reject(list, iterator).catch<void>(e => {
+                promizr.reject(stopList, iterator).catch<void>(e => {
                     e.should.equal(err);
 
                     sinon.assert.calledOnce(spy);
-                    sinon.assert.calledWithExactly(spy, list[1]);
+                    sinon.assert.calledWithExactly(spy, stopList[1]);
 
                     sinon.assert.calledThrice(iterator);
-                    sinon.assert.calledWithExactly(iterator, list[0], 0, list);
-                    sinon.assert.calledWithExactly(iterator, list[1], 1, list);
-                    sinon.assert.calledWithExactly(iterator, list[2], 2, list);
+                    sinon.assert.calledWithExactly(iterator, stopList[0], 0, stopList);
+                    sinon.assert.calledWithExactly(iterator, stopList[1], 1, stopList);
+                    sinon.assert.calledWithExactly(iterator, stopList[2], 2, stopList);
                 }).then(done, done);
             });
 
@@ -602,14 +603,14 @@ describe("Promizr Collections Methods", () => {
                 var spy = sinon.spy(num => num % 2 === 1),
                     iterator = sinon.spy(num => promizr.timeout(num).then(() => spy(num)));
 
-                promizr.find(list, iterator).then(e => {
+                promizr.find(stopList, iterator).then(e => {
                     sinon.assert.calledOnce(spy);
-                    sinon.assert.calledWithExactly(spy, list[1]);
+                    sinon.assert.calledWithExactly(spy, stopList[1]);
 
                     sinon.assert.calledThrice(iterator);
-                    sinon.assert.calledWithExactly(iterator, list[0], 0, list);
-                    sinon.assert.calledWithExactly(iterator, list[1], 1, list);
-                    sinon.assert.calledWithExactly(iterator, list[2], 2, list);
+                    sinon.assert.calledWithExactly(iterator, stopList[0], 0, stopList);
+                    sinon.assert.calledWithExactly(iterator, stopList[1], 1, stopList);
+                    sinon.assert.calledWithExactly(iterator, stopList[2], 2, stopList);
                 }).then(done, done);
             });
 
@@ -619,7 +620,7 @@ describe("Promizr Collections Methods", () => {
 
                     iterator = sinon.spy(num => {
                         return promizr.timeout(num).then(() => {
-                            if (num === list[2]) {
+                            if (num === stopList[2]) {
                                 return Promise.reject(err);
                             }
 
@@ -627,16 +628,16 @@ describe("Promizr Collections Methods", () => {
                         });
                     });
 
-                promizr.find(list, iterator).catch<void>(e => {
+                promizr.find(stopList, iterator).catch<void>(e => {
                     e.should.equal(err);
 
                     sinon.assert.calledOnce(spy);
-                    sinon.assert.calledWithExactly(spy, list[1]);
+                    sinon.assert.calledWithExactly(spy, stopList[1]);
 
                     sinon.assert.calledThrice(iterator);
-                    sinon.assert.calledWithExactly(iterator, list[0], 0, list);
-                    sinon.assert.calledWithExactly(iterator, list[1], 1, list);
-                    sinon.assert.calledWithExactly(iterator, list[2], 2, list);
+                    sinon.assert.calledWithExactly(iterator, stopList[0], 0, stopList);
+                    sinon.assert.calledWithExactly(iterator, stopList[1], 1, stopList);
+                    sinon.assert.calledWithExactly(iterator, stopList[2], 2, stopList);
                 }).then(done, done);
             });
 
@@ -751,7 +752,7 @@ describe("Promizr Collections Methods", () => {
                 err = new Error("test"),
                 iterator = sinon.spy(num => {
                     return promizr.timeout(num).then(() => {
-                        if (num === list[2]) {
+                        if (num === stopList[2]) {
                             return Promise.reject(err);
                         }
 
@@ -759,16 +760,16 @@ describe("Promizr Collections Methods", () => {
                     });
                 });
 
-            promizr.sortBy(list, iterator).catch<void>(e => {
+            promizr.sortBy(stopList, iterator).catch<void>(e => {
                 e.should.equal(err);
 
                 sinon.assert.calledOnce(spy);
-                sinon.assert.calledWithExactly(spy, list[1]);
+                sinon.assert.calledWithExactly(spy, stopList[1]);
 
                 sinon.assert.calledThrice(iterator);
-                sinon.assert.calledWithExactly(iterator, list[0], 0, list);
-                sinon.assert.calledWithExactly(iterator, list[1], 1, list);
-                sinon.assert.calledWithExactly(iterator, list[2], 2, list);
+                sinon.assert.calledWithExactly(iterator, stopList[0], 0, stopList);
+                sinon.assert.calledWithExactly(iterator, stopList[1], 1, stopList);
+                sinon.assert.calledWithExactly(iterator, stopList[2], 2, stopList);
             }).then(done, done);
         });
 
@@ -812,14 +813,14 @@ describe("Promizr Collections Methods", () => {
             var spy = sinon.spy(num => num % 2 === 1),
                 iterator = sinon.spy(num => promizr.timeout(num).then(() => spy(num)));
 
-            promizr.some(list, iterator).then(e => {
+            promizr.some(stopList, iterator).then(e => {
                 sinon.assert.calledOnce(spy);
-                sinon.assert.calledWithExactly(spy, list[1]);
+                sinon.assert.calledWithExactly(spy, stopList[1]);
 
                 sinon.assert.calledThrice(iterator);
-                sinon.assert.calledWithExactly(iterator, list[0], 0, list);
-                sinon.assert.calledWithExactly(iterator, list[1], 1, list);
-                sinon.assert.calledWithExactly(iterator, list[2], 2, list);
+                sinon.assert.calledWithExactly(iterator, stopList[0], 0, stopList);
+                sinon.assert.calledWithExactly(iterator, stopList[1], 1, stopList);
+                sinon.assert.calledWithExactly(iterator, stopList[2], 2, stopList);
             }).then(done, done);
         });
 
@@ -829,7 +830,7 @@ describe("Promizr Collections Methods", () => {
 
                 iterator = sinon.spy(num => {
                     return promizr.timeout(num).then(() => {
-                        if (num === list[2]) {
+                        if (num === stopList[2]) {
                             return Promise.reject(err);
                         }
 
@@ -837,16 +838,16 @@ describe("Promizr Collections Methods", () => {
                     });
                 });
 
-            promizr.some(list, iterator).catch<void>(e => {
+            promizr.some(stopList, iterator).catch<void>(e => {
                 e.should.equal(err);
 
                 sinon.assert.calledOnce(spy);
-                sinon.assert.calledWithExactly(spy, list[1]);
+                sinon.assert.calledWithExactly(spy, stopList[1]);
 
                 sinon.assert.calledThrice(iterator);
-                sinon.assert.calledWithExactly(iterator, list[0], 0, list);
-                sinon.assert.calledWithExactly(iterator, list[1], 1, list);
-                sinon.assert.calledWithExactly(iterator, list[2], 2, list);
+                sinon.assert.calledWithExactly(iterator, stopList[0], 0, stopList);
+                sinon.assert.calledWithExactly(iterator, stopList[1], 1, stopList);
+                sinon.assert.calledWithExactly(iterator, stopList[2], 2, stopList);
             }).then(done, done);
         });
 
@@ -881,7 +882,7 @@ describe("Promizr Collections Methods", () => {
             var spy = sinon.spy(num => num % 2 === 0),
                 iterator = num => promizr.timeout(num).then(() => spy(num));
 
-            promizr.every(list, iterator).then(result => {
+            promizr.every(stopList, iterator).then(result => {
                 sinon.assert.calledOnce(spy);
                 result.should.not.be.ok;
             }).then(done, done);
@@ -891,14 +892,14 @@ describe("Promizr Collections Methods", () => {
             var spy = sinon.spy(num => num % 2 === 0),
                 iterator = sinon.spy(num => promizr.timeout(num).then(() => spy(num)));
 
-            promizr.every(list, iterator).then(e => {
+            promizr.every(stopList, iterator).then(e => {
                 sinon.assert.calledOnce(spy);
-                sinon.assert.calledWithExactly(spy, list[1]);
+                sinon.assert.calledWithExactly(spy, stopList[1]);
 
                 sinon.assert.calledThrice(iterator);
-                sinon.assert.calledWithExactly(iterator, list[0], 0, list);
-                sinon.assert.calledWithExactly(iterator, list[1], 1, list);
-                sinon.assert.calledWithExactly(iterator, list[2], 2, list);
+                sinon.assert.calledWithExactly(iterator, stopList[0], 0, stopList);
+                sinon.assert.calledWithExactly(iterator, stopList[1], 1, stopList);
+                sinon.assert.calledWithExactly(iterator, stopList[2], 2, stopList);
             }).then(done, done);
         });
 
@@ -908,7 +909,7 @@ describe("Promizr Collections Methods", () => {
 
                 iterator = sinon.spy(num => {
                     return promizr.timeout(num).then(() => {
-                        if (num === list[2]) {
+                        if (num === stopList[2]) {
                             return Promise.reject(err);
                         }
 
@@ -916,16 +917,16 @@ describe("Promizr Collections Methods", () => {
                     });
                 });
 
-            promizr.every(list, iterator).catch<void>(e => {
+            promizr.every(stopList, iterator).catch<void>(e => {
                 e.should.equal(err);
 
                 sinon.assert.calledOnce(spy);
-                sinon.assert.calledWithExactly(spy, list[1]);
+                sinon.assert.calledWithExactly(spy, stopList[1]);
 
                 sinon.assert.calledThrice(iterator);
-                sinon.assert.calledWithExactly(iterator, list[0], 0, list);
-                sinon.assert.calledWithExactly(iterator, list[1], 1, list);
-                sinon.assert.calledWithExactly(iterator, list[2], 2, list);
+                sinon.assert.calledWithExactly(iterator, stopList[0], 0, stopList);
+                sinon.assert.calledWithExactly(iterator, stopList[1], 1, stopList);
+                sinon.assert.calledWithExactly(iterator, stopList[2], 2, stopList);
             }).then(done, done);
         });
 
@@ -956,9 +957,9 @@ describe("Promizr Collections Methods", () => {
                     sinon.assert.calledThrice(spy);
 
                     results.length.should.equal(3);
-                    results[0].should.equal(list[1]);
-                    results[1].should.equal(list[2]);
-                    results[2].should.equal(list[0]);
+                    results[0].should.equal(list[0]);
+                    results[1].should.equal(list[1]);
+                    results[2].should.equal(list[2]);
                 }).then(done, done);
             });
 
@@ -968,7 +969,7 @@ describe("Promizr Collections Methods", () => {
 
                     iterator = sinon.spy(num => {
                         return promizr.timeout(num).then(() => {
-                            if (num === list[2]) {
+                            if (num === stopList[2]) {
                                 return Promise.reject(err);
                             }
 
@@ -976,16 +977,16 @@ describe("Promizr Collections Methods", () => {
                         });
                     });
 
-                promizr.concat(list, iterator).catch<void>(e => {
+                promizr.concat(stopList, iterator).catch<void>(e => {
                     e.should.equal(err);
 
                     sinon.assert.calledOnce(spy);
-                    sinon.assert.calledWithExactly(spy, list[1]);
+                    sinon.assert.calledWithExactly(spy, stopList[1]);
 
                     sinon.assert.calledThrice(iterator);
-                    sinon.assert.calledWithExactly(iterator, list[0], 0, list);
-                    sinon.assert.calledWithExactly(iterator, list[1], 1, list);
-                    sinon.assert.calledWithExactly(iterator, list[2], 2, list);
+                    sinon.assert.calledWithExactly(iterator, stopList[0], 0, stopList);
+                    sinon.assert.calledWithExactly(iterator, stopList[1], 1, stopList);
+                    sinon.assert.calledWithExactly(iterator, stopList[2], 2, stopList);
                 }).then(done, done);
             });
 
