@@ -27,6 +27,7 @@ var tests = [
     "collections",
     "flow",
     //"nextTick",
+    "progresspromise",
     //"queue",
     //"utils"
 ];
