@@ -1,6 +1,6 @@
 ﻿/// <reference path="../_definitions.d.ts" />
 
-export var nextTick: (cb: Function) => void = (function () {
+var nextTick: (cb: Function) => void = (function () {
     // Node.JS
     if (typeof process !== "undefined" && {}.toString.call(process) === "[object process]") {
         if (global.setImmediate) {
