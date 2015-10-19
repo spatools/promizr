@@ -32,7 +32,7 @@ export function createRejectFunction(promise: Promise<any>): PromiseRejectFuncti
  * @returns {PromiseResolveFunction} A function which resolve promise using resolution argument
  */
 export function createResolveFunction<T>(promise: Promise<T>): PromiseResolveFunction<T> {
-    return (resolution: any) => {
+    return (resolution?: any) => {
         if (promise._status !== status.unresolved) {
             return;
         }
@@ -56,7 +56,7 @@ export function createResolveFunction<T>(promise: Promise<T>): PromiseResolveFun
  * @returns {PromiseResolveFunction} A function which resolve promise using resolution argument
  */
 export function createResolutionHandlerFunction<T, U>(promise: Promise<T>, onFulfilled: (resolution: T) => U|Thenable<U>, onRejected: PromiseErrorCallback<U>): PromiseResolveFunction<T> {
-    return (resolution: any) => {
+    return (resolution?: any) => {
         if (resolution === promise) {
             var err = new TypeError("Handler result cannot be same promise as input");
             return onRejected.call(undefined, err);

@@ -8,6 +8,7 @@ interface PromiseRejectFunction {
     (reason: any): void;
 }
 interface PromiseResolveFunction<T> {
+    (): void;
     (value: T): void;
 }
 
