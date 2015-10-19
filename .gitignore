@@ -16,6 +16,7 @@ x64/
 [Oo]bj/
 [Dd]ist/
 nuget/*.nupkg
+.tscache/
 
 # Dependencies
 node_modules/

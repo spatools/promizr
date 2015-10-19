@@ -12,8 +12,6 @@ interface RequireDefine {
     amd: boolean;
 }
 
-declare var Uint8ClampedArray: any;
-
 interface PromiseTaskExecutor<T> {
     (...args: any[]): Promise<T>;
 }
