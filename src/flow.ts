@@ -1,11 +1,13 @@
 ﻿/// <reference path="../_definitions.d.ts" />
 
+const own = Object.prototype.hasOwnProperty;
+
 export interface PromiseTaskExecutorObject<T> {
-    [key: string]: () => Promise<T>
+    [key: string]: () => Promise<T>;
 }
 
 export interface PromiseSeriesObjectResult<T> {
-    [key: string]: T
+    [key: string]: T;
 }
 
 function listSeries<T>(array: PromiseTaskExecutor<T>[]): Promise<T[]> {
@@ -37,7 +39,7 @@ function objectSeries<T>(obj: PromiseTaskExecutorObject<T>): Promise<PromiseSeri
     }
 
     for (key in obj) {
-        if (obj.hasOwnProperty(key)) {
+        if (own.call(obj, key)) {
             p = p.then(capture.bind(null, key));
         }
     }
@@ -70,7 +72,7 @@ function objectParallel<T>(obj: PromiseTaskExecutorObject<T>): Promise<PromiseSe
     }
 
     for (key in obj) {
-        if (obj.hasOwnProperty(key)) {
+        if (own.call(obj, key)) {
             promises.push(capture(key));
         }
     }
