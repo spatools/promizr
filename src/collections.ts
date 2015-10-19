@@ -188,35 +188,21 @@ export function reduceRight<T>(array: T[], memo: T, iterator: PromiseReduceItera
  * If order within the original  array  is important, then look at  findSeries .
  */
 export function find<T>(array: T[], iterator: PromiseListIterator<T, boolean>): Promise<T> {
-    var resolvers: PromiseResolveFunction<any>[] = [];
-    var promises = array.map((value, index, list) => iterator(value, index, list).then(valid => {
-        if (!valid) {
-            return new Promise<T>((resolve, reject) => {
-                if (resolvers.length === array.length - 1) {
-                    reject("PROMIZR_NOTFOUND");
+    const len = array.length;
+    let count = 0;
+
+    return new Promise<T>((resolve, reject) => {
+        array.forEach((value, index, list) => iterator(value, index, list).then(
+            valid => {
+                if (valid) {
+                    resolve(value);
                 }
-                else {
-                    resolvers.push(resolve);
+                else if (++count === len) {
+                    resolve();
                 }
-            });
-        }
-
-        return value;
-    }));
-
-    return Promise.race(promises)
-        .catch<any>(err => {
-            if (err !== "PROMIZR_NOTFOUND") {
-                throw err;
-            }
-        })
-        .then(result => {
-            while (resolvers.length) {
-                resolvers.pop().call(null);
-            }
-
-            return result;
-        });
+            },
+            reject));
+    });
 }
 
 /**
@@ -224,22 +210,20 @@ export function find<T>(array: T[], iterator: PromiseListIterator<T, boolean>): 
  * This means the result is always the first in the original  array  (in terms of array order) that passes the truth test.
  */
 export function findSeries<T>(array: T[], iterator: PromiseListIterator<T, boolean>): Promise<T> {
-    function finder(item: T, index: number): Promise<void> {
-        return iterator(item, index, array).then(ok => {
-            if (ok) {
-                return Promise.reject({ success: true, data: item });
-            }
-        });
-    }
+    const last = array.length - 1;
 
-    return eachSeries(array, finder)
-        .catch(err => {
-            if (!err.success) {
-                throw err;
-            }
-
-            return err.data;
-        });
+    return new Promise<T>((resolve, reject) => {
+        eachSeries(array, (item, index, list) => iterator(item, index, list).then(
+            valid => {
+                if (valid) {
+                    resolve(item);
+                }
+                else if (index === last) {
+                    resolve();
+                }
+            },
+            reject));
+    });
 }
 
 
@@ -305,13 +289,8 @@ export function every<T>(array: T[], iterator: PromiseListIterator<T, boolean>):
  * There is no guarantee that the results array will be returned in the original order of  array  passed to the  iterator  function.
  */
 export function concat<T, U>(array: T[], iterator: PromiseListIterator<T, U[]>): Promise<U[]> {
-    var results: U[] = [];
-
-    var promises = array.map((value, index) => iterator(value, index, array).then(res => {
-        results = results.concat(res || []);
-    }));
-
-    return Promise.all(promises).then(() => results);
+    return map(array, iterator)
+        .then(results => Array.prototype.concat.apply([], results.filter(a => !!a)));
 }
 
 /**
