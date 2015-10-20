@@ -2,31 +2,160 @@
 
 declare module promizr {
 /// <reference path="../_definitions.d.ts" />
+export interface ProgressPromiseCallback<P> {
+    (val: P): void;
+}
+export interface ProgressPromiseExecutor<T, P> {
+    (resolve: PromiseResolveFunction<T>, reject: PromiseRejectFunction, progress: ProgressPromiseCallback<P>): void;
+}
+export interface ProgressPromiseDeferred<T, P> {
+    promise: ProgressPromise<T, P>;
+    resolve: PromiseResolveFunction<T>;
+    reject: PromiseRejectFunction;
+    progress: ProgressPromiseCallback<P>;
+}
+export type ProgressPromiseable<T, P> = T | Thenable<T> | ProgressPromise<T, P>;
+export class ProgressPromise<T, P> implements Thenable<T> {
+    _innerPromise: Promise<T>;
+    _progress: P;
+    _progressesCallbacks: ProgressPromiseCallback<P>[];
+    constructor(executor: ProgressPromiseExecutor<T, P>);
+    progress(onProgress: ProgressPromiseCallback<P>): ProgressPromise<T, P>;
+    /**
+     * Create a new Promise by chaining given callback to current Promise
+     * @param {PromiseCallback} onFulfilled Callback to be called when Promise fulfills
+     * @param {PromiseCallback} [onRejected] Callback to be called when Promise fails
+     * @returns {Promise} Chained Promise
+     */
+    then<U>(onFulfilled: (value: T) => U | Thenable<U>): Promise<U>;
+    then<U>(onFulfilled: (value: T) => U | Thenable<U>, onRejected: PromiseErrorCallback<U>): Promise<U>;
+    /**
+     * The catch function allows to apply a callback on rejection handler.
+     * It is equivalent to promise.then(undefined, onRejected)
+     * @param {PromiseCallback} onRejected callback to be called whenever promise fail
+     * @returns {Promise} A chained Promise which handle error and fullfil
+     */
+    catch<U>(onRejected: PromiseErrorCallback<U>): Promise<U>;
+    static defer<T, P>(): ProgressPromiseDeferred<T, P>;
+    static all<T, P>(promises: ProgressPromiseable<T, P>[]): ProgressPromise<T[], P[]>;
+    static race<T, P>(promises: ProgressPromiseable<T, P>[]): ProgressPromise<T, P[]>;
+}
+
+/// <reference path="../_definitions.d.ts" />
+/** A function that return a Promise */
 export interface PromiseTaskExecutor<T> {
     (...args: any[]): Promise<T>;
 }
+/** Base List Iterator for promizr */
 export interface PromiseListIterator<T, U> {
     (item: T, index: number, list: T[]): Promise<U>;
 }
+/** Iterator for promizr.reduce */
 export interface PromiseReduceIterator<T> {
     (memo: T, item: T): Promise<T>;
 }
+/**
+ * Applies the function  iterator  to each item in  arr , in parallel.
+ * The  iterator  is called with an item from the list, the index of this item and the list itself.
+ * If the  iterator  emit a rejected Promise, the each function Promise result is instantly rejected.
+ *
+ * Note, that since this function applies  iterator  to each item in parallel, there is no guarantee that the iterator functions will complete in order.
+ */
 export function each<T>(array: T[], iterator: PromiseListIterator<T, any>): Promise<void>;
+/**
+ * The same as  each , only  iterator  is applied to each item in  array  in series.
+ * The next  iterator  is only called once the current one has completed.
+ * This means the  iterator  functions will complete in order.
+ */
 export function eachSeries<T>(array: T[], iterator: PromiseListIterator<T, any>): Promise<void>;
+/**
+ * Produces a new array of values by mapping each value in  array  through the  iterator  function.
+ * The  iterator  is called with an item from the list, the index of this item and the list itself.
+ * If the  iterator  emit a rejected Promise, the each function Promise result is instantly rejected.
+ *
+ * Note, that since this function applies the  iterator  to each item in parallel, there is no guarantee that the  iterator  functions will complete in order.
+ * However, the results array will be in the same order as the original  arr .
+ */
 export function map<T, U>(array: T[], iterator: PromiseListIterator<T, U>): Promise<U[]>;
+/**
+ * The same as  map , only the  iterator  is applied to each item in  array  in series.
+ * The next  iterator  is only called once the current one has completed.
+ * The results array will be in the same order as the original.
+ */
 export function mapSeries<T, U>(array: T[], iterator: PromiseListIterator<T, U>): Promise<U[]>;
+/**
+ * Returns a new array of all the values in  array  which pass an async truth test.
+ * The Promise returned by each  iterator  call can only returns boolean value!
+ * This operation is performed in parallel, but the results array will be in the same order as the original.
+ */
 export function filter<T>(array: T[], iterator: PromiseListIterator<T, boolean>): Promise<T[]>;
+/**
+ * The same as  filter  only the  iterator  is applied to each item in  array  in series.
+ * The next  iterator  is only called once the current one has completed.
+ * The results array will be in the same order as the original.
+ */
 export function filterSeries<T>(array: T[], iterator: PromiseListIterator<T, boolean>): Promise<T[]>;
+/**
+ * The opposite of  filter . Removes values that pass an  async  truth test.
+ */
 export function reject<T>(array: T[], iterator: PromiseListIterator<T, boolean>): Promise<T[]>;
+/**
+ * The same as  reject , only the  iterator  is applied to each item in  array  in series.
+ */
 export function rejectSeries<T>(array: T[], iterator: PromiseListIterator<T, boolean>): Promise<T[]>;
+/**
+ * Reduces  array  into a single value using an async  iterator  to return each successive step.
+ * memo  is the initial state of the reduction.
+ * This function only operates in series.
+ *
+ * For performance reasons, it may make sense to split a call to this function into a parallel map,
+ * and then use the normal  Array.prototype.reduce  on the results.
+ *
+ * This function is for situations where each step in the reduction needs to be async;
+ * if you can get the data before reducing it, then it's probably a good idea to do so.
+ */
 export function reduce<T>(array: T[], memo: T, iterator: PromiseReduceIterator<T>): Promise<T>;
+/**
+ * Same as  reduce , only operates on  array  in reverse order.
+ */
 export function reduceRight<T>(array: T[], memo: T, iterator: PromiseReduceIterator<T>): Promise<T>;
+/**
+ * Returns the first value in  array  that passes an async truth test.
+ * The  iterator  is applied in parallel, meaning the first iterator to return  true  resolve the global  find  Promise.
+ * That means the result might not be the first item in the original  array  (in terms of order) that passes the test.
+ * If order within the original  array  is important, then look at  findSeries .
+ */
 export function find<T>(array: T[], iterator: PromiseListIterator<T, boolean>): Promise<T>;
+/**
+ * The same as  find , only the  iterator  is applied to each item in  array  in series.
+ * This means the result is always the first in the original  array  (in terms of array order) that passes the truth test.
+ */
 export function findSeries<T>(array: T[], iterator: PromiseListIterator<T, boolean>): Promise<T>;
+/**
+ * Sorts a list by the results of running each  array  value through an async  iterator .
+ */
 export function sortBy<T, U>(array: T[], iterator: PromiseListIterator<T, U>): Promise<T[]>;
+/**
+ * Returns  true  if at least one element in the  array  satisfies an async test.
+ * The Promise returned by each  iterator  call can only returns boolean value!
+ * Once any iterator call returns  true , the main Promise is resolved.
+ */
 export function some<T>(array: T[], iterator: PromiseListIterator<T, boolean>): Promise<boolean>;
+/**
+ * Returns  true  if every element in  array  satisfies an async test.
+ */
 export function every<T>(array: T[], iterator: PromiseListIterator<T, boolean>): Promise<boolean>;
+/**
+ * Applies  iterator  to each item in  array , concatenating the results.
+ * Returns the concatenated list.
+ *
+ * The  iterator s are called in parallel, and the results are concatenated as they return.
+ * There is no guarantee that the results array will be returned in the original order of  array  passed to the  iterator  function.
+ */
 export function concat<T, U>(array: T[], iterator: PromiseListIterator<T, U[]>): Promise<U[]>;
+/**
+ * Same as  concat , but executes in series instead of parallel.
+ */
 export function concatSeries<T, U>(array: T[], iterator: PromiseListIterator<T, U[]>): Promise<U[]>;
 
 /// <reference path="../_definitions.d.ts" />
@@ -58,24 +187,34 @@ export function timesSeries<T>(times: number, task: PromiseTaskExecutor<T>): Pro
 export var nextTick: (cb: Function) => void;
 
 /// <reference path="../_definitions.d.ts" />
-export interface QueueItem<T, U> {
+export interface QueueItemOptions<T, U> {
     data?: T;
     priority?: number;
-    resolver?(result: U): void;
+}
+export interface QueueItem<T, U> extends QueueItemOptions<T, U> {
+    resolver(result: U): void;
+    rejecter(err: Error): void;
 }
 export interface QueueWorker<T, U> {
     (arg: T): Promise<U>;
 }
+export interface QueueError extends Error {
+    innerException?: Error | any;
+    innerExceptions?: Error[] | any[];
+}
 export class Queue<T, U> {
-    protected items: QueueItem<T, U>[];
-    protected limit: number;
     protected worker: QueueWorker<T, U>;
+    limit: number;
+    protected items: QueueItem<T, U>[];
     protected workers: number;
     protected started: boolean;
     protected paused: boolean;
+    protected hasException: boolean;
     onempty: Function;
     ondrain: Function;
     onsaturated: Function;
+    stopOnError: boolean;
+    waitToReject: boolean;
     constructor(worker: QueueWorker<T, U>, limit?: number, list?: T[]);
     push(data: T): Promise<U>;
     push(datas: T[]): Promise<U[]>;
@@ -90,7 +229,9 @@ export class Queue<T, U> {
     resume(): void;
     clear(): void;
     private insert(datas, before?);
+    protected createItem(data: T, results: U[], errors: any[], count: number, resolve: PromiseResolveFunction<U | U[]>, reject: PromiseRejectFunction): QueueItem<T, U>;
     protected process(): void;
+    protected onProcessEnd(): void;
 }
 export class PriorityQueue<T, U> extends Queue<T, U> {
     defaultPriority: number;

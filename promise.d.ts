@@ -8,6 +8,7 @@ interface PromiseRejectFunction {
     (reason: any): void;
 }
 interface PromiseResolveFunction<T> {
+    (): void;
     (value: T): void;
 }
 
@@ -32,9 +33,11 @@ interface PromiseTask {
     args: any[];
 }
 
+declare type Resolveable<T> = T | Thenable<T>;
+
 interface Thenable<T> {
-    then<U>(onFulfilled: (value: T) => U|Thenable<U>): Thenable<U>;
-    then<U>(onFulfilled: (value: T) => U|Thenable<U>, onRejected: PromiseErrorCallback<U>): Thenable<U>;
+    then<U>(onFulfilled: (value: T) => Resolveable<U>): Thenable<U>;
+    then<U>(onFulfilled: (value: T) => Resolveable<U>, onRejected: PromiseErrorCallback<U>): Thenable<U>;
 }
 
 declare class Promise<T> implements Thenable<T> {
@@ -45,18 +48,18 @@ declare class Promise<T> implements Thenable<T> {
 
     constructor(executor: PromiseExecutor<T>);
 
-    then<U>(onFulfilled: (value: T) => U|Thenable<U>): Promise<U>;
-    then<U>(onFulfilled: (value: T) => U|Thenable<U>, onRejected: PromiseErrorCallback<U>): Promise<U>;
+    then<U>(onFulfilled: (value: T) => Resolveable<U>): Promise<U>;
+    then<U>(onFulfilled: (value: T) => Resolveable<U>, onRejected: PromiseErrorCallback<U>): Promise<U>;
 
     catch<U>(onRejected: PromiseErrorCallback<U>): Promise<U>;
 
-    static all<T>(promises: Promise<T>[]): Promise<T[]>;
-    static race<T>(promises: Promise<T>[]): Promise<T>;
+    static all<T>(promises: Resolveable<T>[]): Promise<T[]>;
+    static race<T>(promises: Resolveable<T>[]): Promise<T>;
 
     static cast<T>(value: any): Promise<T>;
 
     static resolve<T>(): Promise<T>;
-    static resolve<T>(value: T|Thenable<T>): Promise<T>;
+    static resolve<T>(value: Resolveable<T>): Promise<T>;
 
     static reject(reason: Error): Promise<any>;
     static reject(reason: any): Promise<any>;

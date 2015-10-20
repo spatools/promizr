@@ -11,6 +11,7 @@
     }
 }(this, function (root) {
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(_import,module,exports){
+/// <reference path="../_definitions.d.ts" />
 var status = _import("./status");
 var tasks = _import("./tasks");
 var utils = _import("./utils");
@@ -120,8 +121,8 @@ function PromiseReactionTask(reaction, value) {
     }
 }
 exports.PromiseReactionTask = PromiseReactionTask;
-
 },{"./status":4,"./tasks":5,"./utils":6}],2:[function(_import,module,exports){
+/// <reference path="../_definitions.d.ts" />
 var abstract = _import("./abstract");
 var status = _import("./status");
 var tasks = _import("./tasks");
@@ -227,29 +228,29 @@ var Promise = (function () {
     return Promise;
 })();
 module.exports = Promise;
-
 },{"./abstract":1,"./status":4,"./tasks":5,"./utils":6}],3:[function(_import,module,exports){
+/// <reference path="../_definitions.d.ts" />
 function isWellImplemented(P) {
     var resolve;
-    new P(function (r) {
-        resolve = r;
-    });
+    new P(function (r) { resolve = r; });
     return (typeof resolve === "function");
 }
 function hasPromise(P) {
-    return P && "resolve" in P && "reject" in P && "all" in P && "race" in P && isWellImplemented(P);
+    return P &&
+        "resolve" in P && "reject" in P &&
+        "all" in P && "race" in P &&
+        isWellImplemented(P);
 }
 if (!hasPromise(root.Promise)) {
     root.Promise = _import("./class");
 }
-
 },{"./class":2}],4:[function(_import,module,exports){
 exports.waiting = undefined;
 exports.unresolved = "unresolved";
 exports.resolved = "has-resolution";
 exports.rejected = "has-rejection";
-
 },{}],5:[function(_import,module,exports){
+/// <reference path="../_definitions.d.ts" />
 var len = 0, queue = new Array(1000), undef;
 function flush() {
     for (var i = 0; i < len; i += 2) {
@@ -302,7 +303,9 @@ var scheduleFlush = (function () {
         }
         else if (canUsePostMessage()) {
             var messagePrefix = "setImmediate$" + Math.random() + "$", onGlobalMessage = function (event) {
-                if (event.source === win && typeof event.data === "string" && event.data.indexOf(messagePrefix) === 0) {
+                if (event.source === win &&
+                    typeof event.data === "string" &&
+                    event.data.indexOf(messagePrefix) === 0) {
                     flush();
                 }
             };
@@ -339,7 +342,6 @@ function enqueue(callback, args) {
     }
 }
 exports.enqueue = enqueue;
-
 },{}],6:[function(_import,module,exports){
 function isCallable(value) {
     return typeof value === "function";
@@ -380,7 +382,6 @@ function thrower(e) {
     throw e;
 }
 exports.thrower = thrower;
-
 },{}]},{},[3]);
 
 

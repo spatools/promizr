@@ -10,13 +10,116 @@
         factory(root.promizr = root.pzr = {});
     }
 }(this, function (exports) {
+/// <reference path="../_definitions.d.ts" />
+function isProgressPromise(p) {
+    return "progress" in p;
+}
+function createProgressFunction(p) {
+    return function (val) {
+        var cbs = p._progressesCallbacks, len = cbs.length;
+        for (var i = 0; i < len; i++) {
+            cbs[i].call(undefined, val);
+        }
+        p._progress = val;
+    };
+}
+function initAllProgresses(promises, progress) {
+    var len = promises.length, progresses = new Array(len);
+    var i = 0, p;
+    for (; i < len; i++) {
+        p = promises[i];
+        progresses[i] = undefined;
+        if (isProgressPromise(p)) {
+            p.progress(initAllProgressFunction.bind(undefined, progress, progresses, i));
+        }
+    }
+}
+function initAllProgressFunction(progress, progresses, index, val) {
+    progresses[index] = val;
+    progress(progresses);
+}
+function cleaner() {
+    this._progressesCallbacks = undefined;
+}
+var ProgressPromise = (function () {
+    function ProgressPromise(executor) {
+        var _this = this;
+        this._progress = undefined;
+        this._progressesCallbacks = [];
+        if (!(this instanceof ProgressPromise)) {
+            throw new TypeError("Failed to construct 'ProgressPromise': Please use the 'new' operator, this object constructor cannot be called as a function.");
+        }
+        this._innerPromise = new Promise(function (resolve, reject) {
+            executor(resolve, reject, createProgressFunction(_this));
+        });
+        var clean = cleaner.bind(this);
+        this._innerPromise.then(clean, clean);
+    }
+    ;
+    ProgressPromise.prototype.progress = function (onProgress) {
+        if (this._progressesCallbacks) {
+            this._progressesCallbacks.push(onProgress);
+        }
+        if (typeof this._progress !== "undefined") {
+            onProgress.call(undefined, this._progress);
+        }
+        return this;
+    };
+    ProgressPromise.prototype.then = function (onFulfilled, onRejected) {
+        return this._innerPromise.then(onFulfilled, onRejected);
+    };
+    /**
+     * The catch function allows to apply a callback on rejection handler.
+     * It is equivalent to promise.then(undefined, onRejected)
+     * @param {PromiseCallback} onRejected callback to be called whenever promise fail
+     * @returns {Promise} A chained Promise which handle error and fullfil
+     */
+    ProgressPromise.prototype.catch = function (onRejected) {
+        return this._innerPromise.catch(onRejected);
+    };
+    ProgressPromise.defer = function () {
+        var def = {};
+        def.promise = new ProgressPromise(function (res, rej, pro) {
+            def.resolve = res;
+            def.reject = rej;
+            def.progress = pro;
+        });
+        return def;
+    };
+    ProgressPromise.all = function (promises) {
+        return new ProgressPromise(function (resolve, reject, progress) {
+            initAllProgresses(promises, progress);
+            Promise.all(promises).then(resolve, reject);
+        });
+    };
+    ProgressPromise.race = function (promises) {
+        return new ProgressPromise(function (resolve, reject, progress) {
+            initAllProgresses(promises, progress);
+            Promise.race(promises).then(resolve, reject);
+        });
+    };
+    return ProgressPromise;
+})();
+exports.ProgressPromise = ProgressPromise;
+
+/// <reference path="../_definitions.d.ts" />
+/**
+ * Applies the function  iterator  to each item in  arr , in parallel.
+ * The  iterator  is called with an item from the list, the index of this item and the list itself.
+ * If the  iterator  emit a rejected Promise, the each function Promise result is instantly rejected.
+ *
+ * Note, that since this function applies  iterator  to each item in parallel, there is no guarantee that the iterator functions will complete in order.
+ */
 function each(array, iterator) {
     var promises = array.map(iterator);
-    return Promise.all(promises).then(function () {
-        return;
-    });
+    return Promise.all(promises).then(function () { return; });
 }
 exports.each = each;
+/**
+ * The same as  each , only  iterator  is applied to each item in  array  in series.
+ * The next  iterator  is only called once the current one has completed.
+ * This means the  iterator  functions will complete in order.
+ */
 function eachSeries(array, iterator) {
     return new Promise(function (resolve, reject) {
         var p = Promise.resolve(), i = 0, len = array.length;
@@ -30,11 +133,24 @@ function eachSeries(array, iterator) {
     });
 }
 exports.eachSeries = eachSeries;
+/**
+ * Produces a new array of values by mapping each value in  array  through the  iterator  function.
+ * The  iterator  is called with an item from the list, the index of this item and the list itself.
+ * If the  iterator  emit a rejected Promise, the each function Promise result is instantly rejected.
+ *
+ * Note, that since this function applies the  iterator  to each item in parallel, there is no guarantee that the  iterator  functions will complete in order.
+ * However, the results array will be in the same order as the original  arr .
+ */
 function map(array, iterator) {
     var promises = array.map(iterator);
     return Promise.all(promises);
 }
 exports.map = map;
+/**
+ * The same as  map , only the  iterator  is applied to each item in  array  in series.
+ * The next  iterator  is only called once the current one has completed.
+ * The results array will be in the same order as the original.
+ */
 function mapSeries(array, iterator) {
     var results = [];
     function mapper(item, index) {
@@ -45,6 +161,11 @@ function mapSeries(array, iterator) {
     return eachSeries(array, mapper).then(function () { return results; });
 }
 exports.mapSeries = mapSeries;
+/**
+ * Returns a new array of all the values in  array  which pass an async truth test.
+ * The Promise returned by each  iterator  call can only returns boolean value!
+ * This operation is performed in parallel, but the results array will be in the same order as the original.
+ */
 function filter(array, iterator) {
     var results = [], promises = array.map(function (value, index, list) { return iterator(value, index, list).then(function (include) {
         if (include) {
@@ -54,6 +175,11 @@ function filter(array, iterator) {
     return Promise.all(promises).then(function () { return results; });
 }
 exports.filter = filter;
+/**
+ * The same as  filter  only the  iterator  is applied to each item in  array  in series.
+ * The next  iterator  is only called once the current one has completed.
+ * The results array will be in the same order as the original.
+ */
 function filterSeries(array, iterator) {
     var results = [];
     function filterer(item, index) {
@@ -66,6 +192,9 @@ function filterSeries(array, iterator) {
     return eachSeries(array, filterer).then(function () { return results; });
 }
 exports.filterSeries = filterSeries;
+/**
+ * The opposite of  filter . Removes values that pass an  async  truth test.
+ */
 function reject(array, iterator) {
     var results = [], promises = array.map(function (value, index, list) { return iterator(value, index, list).then(function (exclude) {
         if (!exclude) {
@@ -75,6 +204,9 @@ function reject(array, iterator) {
     return Promise.all(promises).then(function () { return results; });
 }
 exports.reject = reject;
+/**
+ * The same as  reject , only the  iterator  is applied to each item in  array  in series.
+ */
 function rejectSeries(array, iterator) {
     var results = [];
     function rejecter(item, index) {
@@ -87,6 +219,17 @@ function rejectSeries(array, iterator) {
     return eachSeries(array, rejecter).then(function () { return results; });
 }
 exports.rejectSeries = rejectSeries;
+/**
+ * Reduces  array  into a single value using an async  iterator  to return each successive step.
+ * memo  is the initial state of the reduction.
+ * This function only operates in series.
+ *
+ * For performance reasons, it may make sense to split a call to this function into a parallel map,
+ * and then use the normal  Array.prototype.reduce  on the results.
+ *
+ * This function is for situations where each step in the reduction needs to be async;
+ * if you can get the data before reducing it, then it's probably a good idea to do so.
+ */
 function reduce(array, memo, iterator) {
     function reducer(item, index) {
         return iterator(memo, item).then(function (result) {
@@ -96,54 +239,56 @@ function reduce(array, memo, iterator) {
     return eachSeries(array, reducer).then(function () { return memo; });
 }
 exports.reduce = reduce;
+/**
+ * Same as  reduce , only operates on  array  in reverse order.
+ */
 function reduceRight(array, memo, iterator) {
     var clone = [].concat(array).reverse();
     return reduce(clone, memo, iterator);
 }
 exports.reduceRight = reduceRight;
+/**
+ * Returns the first value in  array  that passes an async truth test.
+ * The  iterator  is applied in parallel, meaning the first iterator to return  true  resolve the global  find  Promise.
+ * That means the result might not be the first item in the original  array  (in terms of order) that passes the test.
+ * If order within the original  array  is important, then look at  findSeries .
+ */
 function find(array, iterator) {
-    var resolvers = [];
-    var promises = array.map(function (value, index, list) { return iterator(value, index, list).then(function (valid) {
-        if (!valid) {
-            return new Promise(function (resolve, reject) {
-                if (resolvers.length === array.length - 1) {
-                    reject("PROMIZR_NOTFOUND");
-                }
-                else {
-                    resolvers.push(resolve);
-                }
-            });
-        }
-        return value;
-    }); });
-    return Promise.race(promises).catch(function (err) {
-        if (err !== "PROMIZR_NOTFOUND") {
-            throw err;
-        }
-    }).then(function (result) {
-        while (resolvers.length) {
-            resolvers.pop().call(null);
-        }
-        return result;
+    var len = array.length;
+    var count = 0;
+    return new Promise(function (resolve, reject) {
+        array.forEach(function (value, index, list) { return iterator(value, index, list).then(function (valid) {
+            if (valid) {
+                resolve(value);
+            }
+            else if (++count === len) {
+                resolve();
+            }
+        }, reject); });
     });
 }
 exports.find = find;
+/**
+ * The same as  find , only the  iterator  is applied to each item in  array  in series.
+ * This means the result is always the first in the original  array  (in terms of array order) that passes the truth test.
+ */
 function findSeries(array, iterator) {
-    function finder(item, index) {
-        return iterator(item, index, array).then(function (ok) {
-            if (ok) {
-                return Promise.reject({ success: true, data: item });
+    var last = array.length - 1;
+    return new Promise(function (resolve, reject) {
+        eachSeries(array, function (item, index, list) { return iterator(item, index, list).then(function (valid) {
+            if (valid) {
+                resolve(item);
             }
-        });
-    }
-    return eachSeries(array, finder).catch(function (err) {
-        if (!err.success) {
-            throw err;
-        }
-        return err.data;
+            else if (index === last) {
+                resolve();
+            }
+        }, reject); });
     });
 }
 exports.findSeries = findSeries;
+/**
+ * Sorts a list by the results of running each  array  value through an async  iterator .
+ */
 function sortBy(array, iterator) {
     function sortMapper(item, index) {
         return iterator(item, index, array).then(function (res) {
@@ -160,17 +305,27 @@ function sortBy(array, iterator) {
     return map(array, sortMapper).then(function (result) { return result.sort(sortFunction).map(function (i) { return i.source; }); });
 }
 exports.sortBy = sortBy;
+/**
+ * Returns  true  if at least one element in the  array  satisfies an async test.
+ * The Promise returned by each  iterator  call can only returns boolean value!
+ * Once any iterator call returns  true , the main Promise is resolved.
+ */
 function some(array, iterator) {
     return find(array, iterator).then(function (result) { return !!result; });
 }
 exports.some = some;
+/**
+ * Returns  true  if every element in  array  satisfies an async test.
+ */
 function every(array, iterator) {
     var results = [], promises = array.map(function (value, index, list) { return iterator(value, index, list).then(function (ok) {
         if (!ok) {
             throw new Error("PROMIZR_NOTOK");
         }
     }); });
-    return Promise.all(promises).then(function () { return true; }).catch(function (err) {
+    return Promise.all(promises)
+        .then(function () { return true; })
+        .catch(function (err) {
         if (err.message !== "PROMIZR_NOTOK") {
             throw err;
         }
@@ -178,19 +333,29 @@ function every(array, iterator) {
     });
 }
 exports.every = every;
+/**
+ * Applies  iterator  to each item in  array , concatenating the results.
+ * Returns the concatenated list.
+ *
+ * The  iterator s are called in parallel, and the results are concatenated as they return.
+ * There is no guarantee that the results array will be returned in the original order of  array  passed to the  iterator  function.
+ */
 function concat(array, iterator) {
-    var results = [];
-    var promises = array.map(function (value, index) { return iterator(value, index, array).then(function (res) {
-        results = results.concat(res || []);
-    }); });
-    return Promise.all(promises).then(function () { return results; });
+    return map(array, iterator)
+        .then(function (results) { return Array.prototype.concat.apply([], results.filter(function (a) { return !!a; })); });
 }
 exports.concat = concat;
+/**
+ * Same as  concat , but executes in series instead of parallel.
+ */
 function concatSeries(array, iterator) {
-    return mapSeries(array, iterator).then(function (results) { return Array.prototype.concat.apply([], results.filter(function (a) { return !!a; })); });
+    return mapSeries(array, iterator)
+        .then(function (results) { return Array.prototype.concat.apply([], results.filter(function (a) { return !!a; })); });
 }
 exports.concatSeries = concatSeries;
 
+/// <reference path="../_definitions.d.ts" />
+var own = Object.prototype.hasOwnProperty;
 function listSeries(array) {
     var p = Promise.resolve(), i = 0, len = array.length, results = [];
     function capture(index) {
@@ -211,14 +376,16 @@ function objectSeries(obj) {
         });
     }
     for (key in obj) {
-        if (obj.hasOwnProperty(key)) {
+        if (own.call(obj, key)) {
             p = p.then(capture.bind(null, key));
         }
     }
     return p.then(function () { return results; });
 }
 function series(tasks) {
-    return Array.isArray(tasks) ? listSeries(tasks) : objectSeries(tasks);
+    return Array.isArray(tasks) ?
+        listSeries(tasks) :
+        objectSeries(tasks);
 }
 exports.series = series;
 function listParallel(array) {
@@ -233,14 +400,16 @@ function objectParallel(obj) {
         });
     }
     for (key in obj) {
-        if (obj.hasOwnProperty(key)) {
+        if (own.call(obj, key)) {
             promises.push(capture(key));
         }
     }
     return Promise.all(promises).then(function () { return results; });
 }
 function parallel(tasks) {
-    return Array.isArray(tasks) ? listParallel(tasks) : objectParallel(tasks);
+    return Array.isArray(tasks) ?
+        listParallel(tasks) :
+        objectParallel(tasks);
 }
 exports.parallel = parallel;
 function whilst(test, task) {
@@ -398,9 +567,7 @@ exports.times = times;
 function timesSeries(times, task) {
     var p = Promise.resolve(), results = [], i = times;
     function capture() {
-        return Promise.resolve(task()).then(function (result) {
-            results.push(result);
-        });
+        return Promise.resolve(task()).then(function (result) { results.push(result); });
     }
     for (; i > 0; i--) {
         p = p.then(capture);
@@ -409,7 +576,9 @@ function timesSeries(times, task) {
 }
 exports.timesSeries = timesSeries;
 
-exports.nextTick = (function () {
+/// <reference path="../_definitions.d.ts" />
+var nextTick = (function () {
+    // Node.JS
     if (typeof process !== "undefined" && {}.toString.call(process) === "[object process]") {
         if (global.setImmediate) {
             return function (cb) {
@@ -430,7 +599,9 @@ exports.nextTick = (function () {
         };
     }
     else {
-        var win = (typeof window !== "undefined") ? window : {}, tempCallback, canUsePostMessage = function canUsePostMessage() {
+        var win = (typeof window !== "undefined") ? window : {}, tempCallbacks = [], canUsePostMessage = function canUsePostMessage() {
+            // The test against `importScripts` prevents this implementation from being installed inside a web worker,
+            // where `global.postMessage` means something completely different and can"t be used for this purpose.
             if (win.postMessage && !win.importScripts) {
                 var postMessageIsAsynchronous = true, oldOnMessage = win.onmessage;
                 win.onmessage = function () {
@@ -441,23 +612,30 @@ exports.nextTick = (function () {
                 return postMessageIsAsynchronous;
             }
         };
+        // Mutation Observer
         if (win.MutationObserver || win.WebKitMutationObserver) {
             win.MutationObserver = win.MutationObserver || win.WebKitMutationObserver;
             var iterations = 0, node = document.createTextNode(""), observer = new win.MutationObserver(function () {
-                tempCallback && tempCallback();
-                tempCallback = null;
+                var cb;
+                while ((cb = tempCallbacks.shift()) || tempCallbacks.length) {
+                    cb();
+                }
             });
             observer.observe(node, { characterData: true });
             return function (cb) {
-                tempCallback = cb;
+                tempCallbacks.push(cb);
                 node.data = (iterations = ++iterations % 2);
             };
         }
         else if (canUsePostMessage()) {
             var messagePrefix = "setImmediate$" + Math.random() + "$", onGlobalMessage = function (event) {
-                if (event.source === win && typeof event.data === "string" && event.data.indexOf(messagePrefix) === 0 && tempCallback) {
-                    tempCallback();
-                    tempCallback = null;
+                if (event.source === win &&
+                    typeof event.data === "string" &&
+                    event.data.indexOf(messagePrefix) === 0) {
+                    var cb;
+                    while ((cb = tempCallbacks.shift()) || tempCallbacks.length) {
+                        cb();
+                    }
                 }
             };
             if (win.addEventListener) {
@@ -467,7 +645,7 @@ exports.nextTick = (function () {
                 win.attachEvent("onmessage", onGlobalMessage);
             }
             return function (cb) {
-                tempCallback = cb;
+                tempCallbacks.push(cb);
                 win.postMessage(messagePrefix + Math.random() * 1000, "*");
             };
         }
@@ -479,25 +657,27 @@ exports.nextTick = (function () {
     }
 }());
 
-var __extends = this.__extends || function (d, b) {
+/// <reference path="../_definitions.d.ts" />
+var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
     function __() { this.constructor = d; }
-    __.prototype = b.prototype;
-    d.prototype = new __();
+    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
 };
 var Queue = (function () {
     function Queue(worker, limit, list) {
+        if (limit === void 0) { limit = 1; }
+        this.worker = worker;
+        this.limit = limit;
         this.items = [];
-        this.limit = 1;
         this.workers = 0;
         this.started = false;
         this.paused = false;
-        if (limit) {
-            this.limit = limit;
-        }
-        this.worker = worker;
+        this.hasException = false;
+        this.stopOnError = false;
+        this.waitToReject = false;
+        this.process = this.process.bind(this);
         if (list && list.length > 0) {
-            this.push.apply(this, list);
+            this.push(list);
         }
     }
     Queue.prototype.push = function () {
@@ -536,10 +716,11 @@ var Queue = (function () {
         this.paused = true;
     };
     Queue.prototype.resume = function () {
-        if (!this.paused) {
+        if (!this.paused || !this.hasException) {
             return;
         }
         this.paused = false;
+        this.hasException = false;
         var i = 0, len = this.limit, process = this.process.bind(this);
         for (; i < len; i++) {
             nextTick(process);
@@ -550,26 +731,17 @@ var Queue = (function () {
         this.items = [];
     };
     Queue.prototype.insert = function (datas, before) {
-        var resolver, promise = new Promise(function (r) {
-            resolver = r;
-        }), results = [], process = this.process.bind(this);
-        if (datas.length === 0) {
+        var resolver, rejecter;
+        var promise = new Promise(function (res, rej) { resolver = res; rejecter = rej; }), length = datas.length, errors = [], results = [];
+        if (length === 0) {
             return Promise.resolve([]);
         }
         if (!this.started) {
             this.started = true;
         }
         function capture(data) {
-            nextTick(process);
-            return {
-                data: data,
-                resolver: function (res) {
-                    results.push(res);
-                    if (results.length === datas.length) {
-                        resolver(results.length === 1 ? results[0] : results);
-                    }
-                }
-            };
+            nextTick(this.process);
+            return this.createItem(data, results, errors, length, resolver, rejecter);
         }
         if (before) {
             this.items.unshift.apply(this.items, datas.map(capture, this));
@@ -582,23 +754,55 @@ var Queue = (function () {
         }
         return promise;
     };
+    Queue.prototype.createItem = function (data, results, errors, count, resolve, reject) {
+        var _this = this;
+        return {
+            data: data,
+            resolver: function (res) {
+                results.push(res);
+                if (results.length === count) {
+                    resolve(count === 1 ? results[0] : results);
+                }
+            },
+            rejecter: function (err) {
+                if (!_this.waitToReject) {
+                    return reject(err);
+                }
+                errors.push(err);
+                if (errors.length + results.length === count) {
+                    var error = new Error("Queue worker exception");
+                    count === 1 ?
+                        error.innerException = errors[0] :
+                        error.innerExceptions = errors;
+                    reject(error);
+                }
+            }
+        };
+    };
     Queue.prototype.process = function () {
         var _this = this;
-        if (!this.paused && this.workers < this.limit && this.items.length > 0) {
+        if (!this.paused && this.workers < this.limit && this.items.length > 0 && !(this.stopOnError && this.hasException)) {
             var item = this.items.shift();
             if (this.onempty && this.items.length === 0) {
                 this.onempty();
             }
             this.workers += 1;
-            this.worker(item.data).then(function (res) {
-                _this.workers -= 1;
-                item.resolver.call(null, res);
-                if (_this.ondrain && _this.items.length + _this.workers === 0) {
-                    _this.ondrain();
-                }
-                _this.process();
+            Promise.resolve(this.worker(item.data)).then(function (res) {
+                item.resolver.call(undefined, res);
+                _this.onProcessEnd();
+            }, function (err) {
+                item.rejecter.call(undefined, err);
+                _this.hasException = true;
+                _this.onProcessEnd();
             });
         }
+    };
+    Queue.prototype.onProcessEnd = function () {
+        this.workers -= 1;
+        if (this.ondrain && this.items.length + this.workers === 0) {
+            this.ondrain();
+        }
+        this.process();
     };
     return Queue;
 })();
@@ -638,27 +842,20 @@ var PriorityQueue = (function (_super) {
         return this.insertAt(datas, priority);
     };
     PriorityQueue.prototype.insertAt = function (datas, priority) {
-        if (datas.length === 0) {
+        var length = datas.length;
+        if (length === 0) {
             return Promise.resolve([]);
         }
-        var resolver, promise = new Promise(function (r) {
-            resolver = r;
-        }), results = [], process = this.process.bind(this), index = this.binarySearch(this.items, { priority: priority }, this.compareTasks) + 1;
+        var resolver, rejecter;
+        var promise = new Promise(function (res, rej) { resolver = res; rejecter = rej; }), errors = [], results = [], index = this.binarySearch(this.items, { priority: priority }, this.compareTasks) + 1;
         if (!this.started) {
             this.started = true;
         }
         function capture(data) {
-            nextTick(process);
-            return {
-                priority: priority,
-                data: data,
-                resolver: function (res) {
-                    results.push(res);
-                    if (results.length === datas.length) {
-                        resolver(results.length === 1 ? results[0] : results);
-                    }
-                }
-            };
+            var item = this.createItem(data, results, errors, length, resolver, rejecter);
+            item.priority = priority;
+            nextTick(this.process);
+            return item;
         }
         this.items.splice.apply(this.items, [index, 0].concat(datas.map(capture, this)));
         if (this.onsaturated && this.items.length >= this.limit) {
@@ -719,9 +916,7 @@ function priorityTaskQueue(limit, list) {
 exports.priorityTaskQueue = priorityTaskQueue;
 function eachLimit(array, limit, iterator) {
     var iterators = array.map(function (value, index, list) { return function () { return iterator(value, index, list); }; });
-    return taskQueue(limit).push(iterators).then(function () {
-        return;
-    });
+    return taskQueue(limit).push(iterators).then(function () { return; });
 }
 exports.eachLimit = eachLimit;
 function mapLimit(array, limit, iterator) {
@@ -743,6 +938,7 @@ function parallelLimit(tasks, limit) {
 }
 exports.parallelLimit = parallelLimit;
 
+/// <reference path="../_definitions.d.ts" />
 function apply(task) {
     var args = [];
     for (var _i = 1; _i < arguments.length; _i++) {
@@ -866,13 +1062,7 @@ function log(task) {
     for (var _i = 1; _i < arguments.length; _i++) {
         args[_i - 1] = arguments[_i];
     }
-    return task.apply(null, args).then(function (result) {
-        console.log(result);
-        return result;
-    }, function (err) {
-        console.error(err);
-        throw err;
-    });
+    return task.apply(null, args).then(function (result) { console.log(result); return result; }, function (err) { console.error(err); throw err; });
 }
 exports.log = log;
 function dir(task) {
@@ -880,27 +1070,17 @@ function dir(task) {
     for (var _i = 1; _i < arguments.length; _i++) {
         args[_i - 1] = arguments[_i];
     }
-    return task.apply(null, args).then(function (result) {
-        console.dir(result);
-        return result;
-    }, function (err) {
-        console.error(err);
-        throw err;
-    });
+    return task.apply(null, args).then(function (result) { console.dir(result); return result; }, function (err) { console.error(err); throw err; });
 }
 exports.dir = dir;
 function timeout(ms) {
     return new Promise(function (resolve) {
-        setTimeout(function () {
-            resolve.call(null);
-        }, ms || 1);
+        setTimeout(function () { resolve.call(null); }, ms || 1);
     });
 }
 exports.timeout = timeout;
 function immediate() {
-    return new Promise(function (resolve) {
-        nextTick(resolve);
-    });
+    return new Promise(function (resolve) { nextTick(resolve); });
 }
 exports.immediate = immediate;
 function module() {
@@ -919,9 +1099,7 @@ function module() {
                     mods[_i - 0] = arguments[_i];
                 }
                 resolve(mods.length === 1 ? mods[0] : mods);
-            }, function (err) {
-                reject(err);
-            });
+            }, function (err) { reject(err); });
         }
         catch (e) {
             reject(e);
