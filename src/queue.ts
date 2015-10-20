@@ -202,7 +202,7 @@ export class Queue<T, U> {
             this.ondrain();
         }
 
-        nextTick(this.process);
+        this.process();
     }
 }
 
