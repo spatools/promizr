@@ -26,7 +26,7 @@ var nextTick: (cb: Function) => void = (function () {
     // Browser
     else {
         var win: any = (typeof window !== "undefined") ? window : {},
-            tempCallback: Function,
+            tempCallbacks: Function[] = [],
             canUsePostMessage = function canUsePostMessage() {
                 // The test against `importScripts` prevents this implementation from being installed inside a web worker,
                 // where `global.postMessage` means something completely different and can"t be used for this purpose.
@@ -52,14 +52,16 @@ var nextTick: (cb: Function) => void = (function () {
             var iterations = 0,
                 node: any = document.createTextNode(""),
                 observer = new win.MutationObserver(() => {
-                    tempCallback && tempCallback();
-                    tempCallback = null;
+                    let cb: Function;
+                    while ((cb = tempCallbacks.shift()) || tempCallbacks.length) {
+                        cb();
+                    }
                 });
 
             observer.observe(node, { characterData: true });
 
             return function (cb) {
-                tempCallback = cb;
+                tempCallbacks.push(cb);
                 node.data = (iterations = ++iterations % 2);
             };
         }
@@ -69,11 +71,12 @@ var nextTick: (cb: Function) => void = (function () {
                 onGlobalMessage = function (event) {
                     if (event.source === win &&
                         typeof event.data === "string" &&
-                        event.data.indexOf(messagePrefix) === 0 &&
-                        tempCallback) {
+                        event.data.indexOf(messagePrefix) === 0) {
 
-                        tempCallback();
-                        tempCallback = null;
+                        let cb: Function;
+                        while ((cb = tempCallbacks.shift()) || tempCallbacks.length) {
+                            cb();
+                        }
                     }
                 };
 
@@ -84,7 +87,7 @@ var nextTick: (cb: Function) => void = (function () {
             }
 
             return function (cb) {
-                tempCallback = cb;
+                tempCallbacks.push(cb);
                 win.postMessage(messagePrefix + Math.random() * 1000, "*");
             };
         }
