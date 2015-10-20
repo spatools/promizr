@@ -3,7 +3,7 @@
 import promizr = require("promizr");
 import ProgressContext = require("./helpers/ProgressContext");
 
-describe.only("ProgressPromise class", () => {
+describe("ProgressPromise class", () => {
 
     describe("contructor", () => {
 

@@ -1,5 +1,7 @@
 /// <reference path="../tests.d.ts" />
 
+import promizr = require("promizr");
+
 if (!Function.prototype.bind) {
     Function.prototype.bind = function (oThis) {
         if (typeof this !== "function") {
@@ -32,6 +34,23 @@ export function isUndefined(x: any): boolean {
 
 export function noop(): () => void {
     return function () { return; };
+}
+
+export function identity<T>(val: T): T {
+    return val;
+}
+
+export function createPromise<T>(): Promise<T> {
+    return new Promise(noop);
+}
+
+export function createDeferreds<T>(list: T[]): PromiseCapability<void>[] {
+    return list.map(() => {
+        const dfd = promizr.defer<any>();
+        dfd.promise = dfd.promise.then(promizr.timeout);
+
+        return dfd;
+    });
 }
 
 export function cleanSpy(spy: SinonSpy) {
