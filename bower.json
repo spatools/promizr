@@ -23,9 +23,9 @@
     "tests"
   ],
   "devDependencies": {
-    "requirejs": "~2.1.17",
-    "mocha": "^2.2.4",
-    "should": "^5.2.0",
-    "sinon": "http://sinonjs.org/releases/sinon-1.8.1.js"
+    "requirejs": "^2.1.20",
+    "mocha": "^2.3.3",
+    "should": "^7.1.0",
+    "sinon": "http://sinonjs.org/releases/sinon-1.17.1.js"
   }
 }

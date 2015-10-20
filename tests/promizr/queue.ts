@@ -307,11 +307,7 @@ describe("Promizr Queue Methods", () => {
                         return dfds[limit * 2 - 1].promise;
                     })
                     .then(() => {
-                        try {
-                            spy.callCount.should.be.below(limit * 3 + 1);
-                        }
-                        catch (e) { throw new Error(e); }
-
+                        spy.callCount.should.be.below(limit * 3 + 1);
                         return dfds[limit * 3 - 1].promise;
                     })
                     .then(() => promizr.timeout())
