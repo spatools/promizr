@@ -1,37 +1,47 @@
 ﻿/// <reference path="../_definitions.d.ts" />
 
-export interface QueueItem<T, U> {
+export interface QueueItemOptions<T, U> {
     data?: T;
     priority?: number;
-    resolver?(result: U): void;
+}
+
+export interface QueueItem<T, U> extends QueueItemOptions<T, U> {
+    resolver(result: U): void;
+    rejecter(err: Error): void;
 }
 export interface QueueWorker<T, U> {
     (arg: T): Promise<U>;
 }
 
+export interface QueueError extends Error {
+    innerException?: Error | any;
+    innerExceptions?: Error[] | any[];
+}
 
 export class Queue<T, U> {
     protected items: QueueItem<T, U>[] = [];
-    protected limit: number = 1;
-    protected worker: QueueWorker<T, U>;
-    protected workers: number = 0;
+    protected workers = 0;
 
-    protected started: boolean = false;
-    protected paused: boolean = false;
+    protected started = false;
+    protected paused = false;
+    protected hasException = false;
 
     public onempty: Function;
     public ondrain: Function;
     public onsaturated: Function;
 
-    constructor(worker: QueueWorker<T, U>, limit?: number, list?: T[]) {
-        if (limit) {
-            this.limit = limit;
-        }
+    public stopOnError = false;
+    public waitToReject = false;
 
-        this.worker = worker;
+    constructor(
+        protected worker: QueueWorker<T, U>,
+        public limit: number = 1,
+        list?: T[]) {
+
+        this.process = this.process.bind(this);
 
         if (list && list.length > 0) {
-            this.push.apply(this, list);
+            this.push(list);
         }
     }
 
@@ -75,11 +85,12 @@ export class Queue<T, U> {
         this.paused = true;
     }
     public resume(): void {
-        if (!this.paused) {
+        if (!this.paused || !this.hasException) {
             return;
         }
 
         this.paused = false;
+        this.hasException = false;
 
         var i = 0, len = this.limit,
             process = this.process.bind(this);
@@ -94,14 +105,17 @@ export class Queue<T, U> {
         this.items = [];
     }
 
-    private insert(datas: T[], before?: boolean): Promise<U|U[]> {
-        var resolver: PromiseResolveFunction<U|U[]>,
-            promise = new Promise(r => { resolver = r; }),
+    private insert(datas: T[], before?: boolean): Promise<U | U[]> {
+        let resolver: PromiseResolveFunction<U | U[]>,
+            rejecter: PromiseRejectFunction;
 
-            results: U[] = [],
-            process = this.process.bind(this);
+        const
+            promise = new Promise((res, rej) => { resolver = res; rejecter = rej; }),
+            length = datas.length,
+            errors: any[] = [],
+            results: U[] = [];
 
-        if (datas.length === 0) {
+        if (length === 0) {
             return Promise.resolve([]);
         }
 
@@ -110,18 +124,8 @@ export class Queue<T, U> {
         }
 
         function capture(data: T): QueueItem<T, U> {
-            nextTick(process);
-
-            return {
-                data: data,
-                resolver: res => {
-                    results.push(res);
-
-                    if (results.length === datas.length) {
-                        resolver(results.length === 1 ? results[0] : results);
-                    }
-                }
-            };
+            nextTick(this.process);
+            return this.createItem(data, results, errors, length, resolver, rejecter);
         }
 
         if (before) {
@@ -138,8 +142,38 @@ export class Queue<T, U> {
         return promise;
     }
 
+    protected createItem(data: T, results: U[], errors: any[], count: number, resolve: PromiseResolveFunction<U | U[]>, reject: PromiseRejectFunction): QueueItem<T, U> {
+        return {
+            data: data,
+            resolver: res => {
+                results.push(res);
+
+                if (results.length === count) {
+                    resolve(count === 1 ? results[0] : results);
+                }
+            },
+            rejecter: err => {
+                if (!this.waitToReject) {
+                    return reject(err);
+                }
+
+                errors.push(err);
+
+                if (errors.length + results.length === count) {
+                    var error: QueueError = new Error("Queue worker exception");
+
+                    count === 1 ?
+                        error.innerException = errors[0] :
+                        error.innerExceptions = errors;
+
+                    reject(error);
+                }
+            }
+        };
+    }
+
     protected process(): void {
-        if (!this.paused && this.workers < this.limit && this.items.length > 0) {
+        if (!this.paused && this.workers < this.limit && this.items.length > 0 && !(this.stopOnError && this.hasException)) {
             var item = this.items.shift();
 
             if (this.onempty && this.items.length === 0) {
@@ -147,18 +181,28 @@ export class Queue<T, U> {
             }
 
             this.workers += 1;
-            this.worker(item.data).then(res => {
-                this.workers -= 1;
-
-                item.resolver.call(null, res);
-
-                if (this.ondrain && this.items.length + this.workers === 0) {
-                    this.ondrain();
+            Promise.resolve(this.worker(item.data)).then(
+                res => {
+                    item.resolver.call(undefined, res);
+                    this.onProcessEnd();
+                },
+                err => {
+                    item.rejecter.call(undefined, err);
+                    this.hasException = true;
+                    this.onProcessEnd();
                 }
-
-                this.process();
-            });
+            );
         }
+    }
+
+    protected onProcessEnd(): void {
+        this.workers -= 1;
+
+        if (this.ondrain && this.items.length + this.workers === 0) {
+            this.ondrain();
+        }
+
+        nextTick(this.process);
     }
 }
 
@@ -208,15 +252,18 @@ export class PriorityQueue<T, U> extends Queue<T, U> {
     }
 
     private insertAt(datas: T[], priority: number): Promise<U|U[]> {
-        if (datas.length === 0) {
+        const length = datas.length;
+        if (length === 0) {
             return Promise.resolve([]);
         }
 
-        var resolver: PromiseResolveFunction<U|U[]>,
-            promise = new Promise(r => { resolver = r; }),
+        let resolver: PromiseResolveFunction<U | U[]>,
+            rejecter: PromiseRejectFunction;
 
+        const
+            promise = new Promise((res, rej) => { resolver = res; rejecter = rej; }),
+            errors: any[] = [],
             results: U[] = [],
-            process = this.process.bind(this),
             index = this.binarySearch(this.items, { priority: priority }, this.compareTasks) + 1;
 
         if (!this.started) {
@@ -224,19 +271,12 @@ export class PriorityQueue<T, U> extends Queue<T, U> {
         }
 
         function capture(data: T): QueueItem<T, U> {
-            nextTick(process);
+            const item = this.createItem(data, results, errors, length, resolver, rejecter);
+            item.priority = priority;
 
-            return {
-                priority: priority,
-                data: data,
-                resolver: res => {
-                    results.push(res);
+            nextTick(this.process);
 
-                    if (results.length === datas.length) {
-                        resolver(results.length === 1 ? results[0] : results);
-                    }
-                }
-            };
+            return item;
         }
 
 
@@ -249,7 +289,7 @@ export class PriorityQueue<T, U> extends Queue<T, U> {
         return promise;
     }
 
-    private binarySearch(seq: QueueItem<T, U>[], item: QueueItem<T, U>, compare: (a: QueueItem<T, U>, b: QueueItem<T, U>) => number): number {
+    private binarySearch(seq: QueueItem<T, U>[], item: QueueItemOptions<T, U>, compare: (a: QueueItemOptions<T, U>, b: QueueItemOptions<T, U>) => number): number {
         var beg = -1,
             end = seq.length - 1,
             mid: number;
@@ -267,7 +307,7 @@ export class PriorityQueue<T, U> extends Queue<T, U> {
 
         return beg;
     }
-    private compareTasks(a: QueueItem<T, U>, b: QueueItem<T, U>): number {
+    private compareTasks(a: QueueItemOptions<T, U>, b: QueueItemOptions<T, U>): number {
         return a.priority - b.priority;
     }
 }
