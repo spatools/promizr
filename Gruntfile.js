@@ -176,6 +176,9 @@ module.exports = function (grunt) {
         },
         
         mocha: {
+            options: {
+                run: false
+            },
             testpzr: ["<%= paths.testpzr %>/index.html"],
             testpoly: ["<%= paths.testpoly %>/index.html"]
         },

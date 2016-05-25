@@ -1,4 +1,4 @@
-﻿/// <reference path="polyfill/promise.d.ts" />
+﻿/// <reference path="typings/globals/es2015-promise/index.d.ts" />
 
 declare var process: any;
 declare var require: any;
