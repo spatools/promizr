@@ -177,15 +177,15 @@ export function denodify<T>(fn: Function, ...args: any[]): Promise<T>;
 export function denodify<T>(ownerOrFn: Function | any): Promise<T> {
     const args = arguments;
     let owner = args[0],
-        fn = args[1], 
+        fn = args[1],
         num = 2;
-        
+
     if (typeof owner === "function" && typeof fn !== "function") {
         fn = owner;
         owner = undefined;
         num = 1;
     }
-    
+
     return promisify(owner, fn).apply(null, slice.call(args, num));
 }
 
@@ -196,28 +196,28 @@ export function promisify<T>(owner: any, fn?: Function): (...args: any[]) => Pro
         fn = owner;
         owner = undefined;
     }
-    
+
     return function () {
         const args = slice.call(arguments);
-        
+
         return new Promise((resolve, reject) => {
             args.push(callback);
             fn.apply(owner, args);
-            
+
             function callback(err) {
                 if (err) {
                     return reject(err);
                 }
-                
+
                 let result = slice.call(arguments, 1);
                 if (result.length === 0) {
                     return resolve();
                 }
-                
+
                 if (result.length === 1) {
                     result = result[0];
                 }
-                
+
                 resolve(result);
             }
         });
@@ -231,13 +231,13 @@ export function uncallbackify<T>(ownerOrFn: Function | any): Promise<T> {
     let owner = args[0],
         fn = args[1],
         num = 2;
-        
+
     if (typeof owner === "function" && typeof fn !== "function") {
         fn = owner;
         owner = undefined;
         num = 1;
     }
-    
+
     return cbpromisify(owner, fn).apply(null, slice.call(args, num));
 }
 
@@ -248,32 +248,32 @@ export function cbpromisify<T>(owner: any, fn?: Function): (...args: any[]) => P
         fn = owner;
         owner = undefined;
     }
-    
+
     return function () {
         const args = slice.call(arguments);
         return new Promise((resolve, reject) => {
             args.push(success, error);
             fn.apply(owner, args);
-            
+
             function success() {
                 let result = slice.call(arguments);
                 if (result.length === 0) {
                     return resolve();
                 }
-                
+
                 if (result.length === 1) {
                     result = result[0];
                 }
-                
+
                 resolve(result);
             }
-            
+
             function error() {
                 let err = slice.call(arguments);
                 if (err.length === 1) {
                     err = err[0];
                 }
-                
+
                 if (!(err instanceof Error)) {
                     err = new Error(err.toString());
                     err.innerError = err;

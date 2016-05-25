@@ -267,6 +267,7 @@ module.exports = function (grunt) {
             publish: {
                 options: {
                     tag: pkg.version,
+                    remote: pkg.repository.url,
                     message: "Publish %sourceName% '" + pkg.version + "' from commit %sourceCommit% on branch %sourceBranch%"
                 }
             }
