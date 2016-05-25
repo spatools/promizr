@@ -5,14 +5,15 @@ export interface ProgressPromiseCallback<P> {
 }
 
 export interface ProgressPromiseExecutor<T, P> {
-    (resolve: PromiseResolveFunction<T>, reject: PromiseRejectFunction, progress: ProgressPromiseCallback<P>): void;
+    (resolve: (val?: T | PromiseLike<T>) => void, reject: (err?: any) => void, progress: (val?: P) => void): void;
 }
 
 export interface ProgressPromiseDeferred<T, P> {
+    resolve(val?: T | PromiseLike<T>): void;
+    reject(err?: any): void;
+    progress(val: P): void;
+
     promise: ProgressPromise<T, P>;
-    resolve: PromiseResolveFunction<T>;
-    reject: PromiseRejectFunction;
-    progress: ProgressPromiseCallback<P>;
 }
 
 export type ProgressPromiseable<T, P> = T | Thenable<T> | ProgressPromise<T, P>;
@@ -99,8 +100,8 @@ export class ProgressPromise<T, P> implements Thenable<T> {
      * @returns {Promise} Chained Promise
      */
     public then<U>(onFulfilled: (value: T) => U | Thenable<U>): Promise<U>;
-    public then<U>(onFulfilled: (value: T) => U | Thenable<U>, onRejected: PromiseErrorCallback<U>): Promise<U>;
-    public then<U>(onFulfilled: (value: T) => U | Thenable<U>, onRejected?: PromiseErrorCallback<U>): Promise<U> {
+    public then<U>(onFulfilled: (value: T) => U | Thenable<U>, onRejected: (err?: any) => void | U): Promise<U>;
+    public then<U>(onFulfilled: (value: T) => U | Thenable<U>, onRejected?: (err?: any) => void | U): Promise<U> {
         return this._innerPromise.then(onFulfilled, onRejected);
     }
 
@@ -110,7 +111,7 @@ export class ProgressPromise<T, P> implements Thenable<T> {
      * @param {PromiseCallback} onRejected callback to be called whenever promise fail
      * @returns {Promise} A chained Promise which handle error and fullfil
      */
-    public catch<U>(onRejected: PromiseErrorCallback<U>): Promise<U> {
+    public catch<U>(onRejected: (err?: any) => void | U): Promise<U> {
         return this._innerPromise.catch(onRejected);
     }
 

@@ -8,12 +8,19 @@ export interface HashFunction {
     (args: any[]): string;
 }
 
+export interface Deferred<T> {
+    resolve(val?: T | PromiseLike<T>): void;
+    reject(err?: any): void;
+
+    promise: Promise<T>;
+}
+
 export function apply<T>(task: TypedFunction<T>, ...args: any[]): TypedFunction<T> {
     return function () {
         return task.apply(null, args);
     };
 }
-export function applyOn<T>(owner: any, task: string|TypedFunction<T>, ...args: any[]): TypedFunction<T> {
+export function applyOn<T>(owner: any, task: string | TypedFunction<T>, ...args: any[]): TypedFunction<T> {
     return function () {
         if (typeof task === "string") {
             return owner[task].apply(owner, args);
@@ -29,7 +36,7 @@ export function partial<T>(task: TypedFunction<T>, ...args: any[]): TypedFunctio
         return task.apply(null, args.concat(arguments));
     };
 }
-export function partialOn<T>(owner: any, task: string|TypedFunction<T>, ...args: any[]): TypedFunction<T> {
+export function partialOn<T>(owner: any, task: string | TypedFunction<T>, ...args: any[]): TypedFunction<T> {
     return function () {
         if (typeof task === "string") {
             return owner[task].apply(owner, args.concat(arguments));
@@ -46,7 +53,7 @@ export function tap<T, U>(task: TypedFunction<T>, ...args: any[]): (arg: U) => U
         return result;
     };
 }
-export function tapOn<T, U>(owner: any, task: string|TypedFunction<T>, ...args: any[]): (arg: U) => U {
+export function tapOn<T, U>(owner: any, task: string | TypedFunction<T>, ...args: any[]): (arg: U) => U {
     return function (result) {
         if (typeof task === "string") {
             owner[task].apply(owner, args);
@@ -59,7 +66,7 @@ export function tapOn<T, U>(owner: any, task: string|TypedFunction<T>, ...args: 
     };
 }
 
-export function memoize<T>(task: PromiseTaskExecutor<T>, hash?: boolean|HashFunction): PromiseTaskExecutor<T> {
+export function memoize<T>(task: PromiseTaskExecutor<T>, hash?: boolean | HashFunction): PromiseTaskExecutor<T> {
     var cache,
         haveToHash = typeof hash !== "undefined",
         hasher: HashFunction;
@@ -139,7 +146,7 @@ export function immediate(): Promise<void> {
 export function module<T>(name: string): Promise<T>;
 export function module<T>(names: string[]): Promise<T[]>;
 export function module<T>(...names: string[]): Promise<T[]>;
-export function module<T>(): Promise<T|T[]> {
+export function module<T>(): Promise<T | T[]> {
     var args = Array.prototype.slice.call(arguments);
     if (args.length === 0) {
         return Promise.resolve();
@@ -155,7 +162,7 @@ export function module<T>(): Promise<T|T[]> {
                 args,
                 (...mods: any[]) => { resolve(mods.length === 1 ? mods[0] : mods); },
                 (err) => { reject(err); }
-                );
+            );
         }
         catch (e) {
             reject(e);
@@ -230,8 +237,8 @@ export function uncallbackify<T>(...args: any[]): Promise<T> {
     });
 }
 
-export function defer<T>(): PromiseCapability<T> {
-    var dfd = { resolve: null, reject: null, promise: null };
+export function defer<T>(): Deferred<T> {
+    var dfd = { resolve: null, reject: null, promise: null } as Deferred<any>;
 
     dfd.promise = new Promise((resolve, reject) => {
         dfd.resolve = resolve;
@@ -241,7 +248,7 @@ export function defer<T>(): PromiseCapability<T> {
     return dfd;
 };
 
-export function polyfill(): typeof Promise {
+export function polyfill(): PromiseConstructorLike {
     if (typeof process === "undefined" || {}.toString.call(process) !== "[object process]") {
         throw new Error("This method is only available in Node.JS environment");
     }

@@ -48,7 +48,7 @@ export class Queue<T, U> {
     public push(data: T): Promise<U>;
     public push(datas: T[]): Promise<U[]>;
     public push(...datas: T[]): Promise<U[]>;
-    public push(...datas: any[]): Promise<U|U[]> {
+    public push(...datas: any[]): Promise<U | U[]> {
         if (datas.length === 1 && Array.isArray(datas[0])) {
             datas = datas[0];
         }
@@ -59,7 +59,7 @@ export class Queue<T, U> {
     public unshift(data: T): Promise<U>;
     public unshift(datas: T[]): Promise<U[]>;
     public unshift(...datas: T[]): Promise<U[]>;
-    public unshift(...datas: any[]): Promise<U|U[]> {
+    public unshift(...datas: any[]): Promise<U | U[]> {
         if (datas.length === 1 && Array.isArray(datas[0])) {
             datas = datas[0];
         }
@@ -106,8 +106,8 @@ export class Queue<T, U> {
     }
 
     private insert(datas: T[], before?: boolean): Promise<U | U[]> {
-        let resolver: PromiseResolveFunction<U | U[]>,
-            rejecter: PromiseRejectFunction;
+        let resolver: (result?: U | U[] | PromiseLike<U | U[]>) => void,
+            rejecter: (err?: any) => void;
 
         const
             promise = new Promise((res, rej) => { resolver = res; rejecter = rej; }),
@@ -142,7 +142,7 @@ export class Queue<T, U> {
         return promise;
     }
 
-    protected createItem(data: T, results: U[], errors: any[], count: number, resolve: PromiseResolveFunction<U | U[]>, reject: PromiseRejectFunction): QueueItem<T, U> {
+    protected createItem(data: T, results: U[], errors: any[], count: number, resolve: (result: U | U[] | PromiseLike<U | U[]>) => void, reject: (err?: any) => void): QueueItem<T, U> {
         return {
             data: data,
             resolver: res => {
@@ -219,7 +219,7 @@ export class PriorityQueue<T, U> extends Queue<T, U> {
     public push(data: T): Promise<U>;
     public push(datas: T[]): Promise<U[]>;
     public push(...datas: T[]): Promise<U[]>;
-    public push(...datas: any[]): Promise<U|U[]> {
+    public push(...datas: any[]): Promise<U | U[]> {
         var priority = this.defaultPriority;
         if (typeof datas[0] === "number") {
             priority = datas.shift();
@@ -238,7 +238,7 @@ export class PriorityQueue<T, U> extends Queue<T, U> {
     public unshift(data: T): Promise<U>;
     public unshift(datas: T[]): Promise<U[]>;
     public unshift(...datas: T[]): Promise<U[]>;
-    public unshift(...datas: any[]): Promise<U|U[]> {
+    public unshift(...datas: any[]): Promise<U | U[]> {
         var priority = this.defaultPriority;
         if (typeof datas[0] === "number") {
             priority = datas.shift();
@@ -251,14 +251,14 @@ export class PriorityQueue<T, U> extends Queue<T, U> {
         return this.insertAt(datas, priority);
     }
 
-    private insertAt(datas: T[], priority: number): Promise<U|U[]> {
+    private insertAt(datas: T[], priority: number): Promise<U | U[]> {
         const length = datas.length;
         if (length === 0) {
             return Promise.resolve([]);
         }
 
-        let resolver: PromiseResolveFunction<U | U[]>,
-            rejecter: PromiseRejectFunction;
+        let resolver: (result?: U | U[] | PromiseLike<U | U[]>) => void,
+            rejecter: (err?: any) => void;
 
         const
             promise = new Promise((res, rej) => { resolver = res; rejecter = rej; }),
@@ -358,7 +358,7 @@ export function mapLimit<T, U>(array: T[], limit: number, iterator: PromiseListI
 
 export function parallelLimit<T>(tasks: PromiseTaskExecutor<T>[], limit: number): Promise<T[]>;
 export function parallelLimit<T>(tasks: PromiseTaskExecutorObject<T>, limit: number): Promise<PromiseSeriesObjectResult<T>>;
-export function parallelLimit<T>(tasks: PromiseTaskExecutor<T>[]|PromiseTaskExecutorObject<T>, limit: number): Promise<T[]|PromiseSeriesObjectResult<T>> {
+export function parallelLimit<T>(tasks: PromiseTaskExecutor<T>[] | PromiseTaskExecutorObject<T>, limit: number): Promise<T[] | PromiseSeriesObjectResult<T>> {
     if (Array.isArray(tasks)) {
         return taskQueue<T>(limit).push(<PromiseTaskExecutor<T>[]>tasks);
     }

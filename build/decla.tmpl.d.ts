@@ -1,5 +1,4 @@
-﻿/// <reference path="./promise.d.ts" />
-
+﻿
 declare module promizr {
 /*****************************CONTENT*****************************/
 }
