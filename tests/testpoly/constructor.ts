@@ -1,11 +1,12 @@
 ﻿/// <reference path="tests.d.ts" />
 
-import abstract = require("polyfill/abstract");
+import * as sinon from "sinon";
+import * as abstract from "polyfill/abstract";
+import * as commonHelpers from "./helpers/common";
 import Promise = require("polyfill/class");
-import commonHelpers = require("./helpers/common");
 
 describe("Promise Constructor", () => {
-    var createResolveFunctionStub: SinonStub, createRejectFunctionStub: SinonStub;
+    var createResolveFunctionStub: sinon.SinonStub, createRejectFunctionStub: sinon.SinonStub;
 
     beforeEach(() => {
         createResolveFunctionStub = sinon.stub(abstract, "createResolveFunction");

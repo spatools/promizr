@@ -1,10 +1,11 @@
 /// <reference path="tests.d.ts" />
 
-import abstract = require("polyfill/abstract");
+import * as sinon from "sinon";
+import * as abstract from "polyfill/abstract";
+import * as tasks from "polyfill/tasks";
+import * as reactionsHelpers from "./helpers/reactions";
+import * as commonHelpers from "./helpers/common";
 import Promise = require("polyfill/class");
-import tasks = require("polyfill/tasks");
-import reactionsHelpers = require("./helpers/reactions");
-import commonHelpers = require("./helpers/common");
 
 describe("Promise Prototype", () => {
     describe("then", () => {

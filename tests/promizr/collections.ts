@@ -1,7 +1,8 @@
 /// <reference path="tests.d.ts" />
 
-import promizr = require("promizr");
-import common = require("./helpers/common");
+import * as sinon from "sinon";
+import * as promizr from "promizr";
+import * as common from "./helpers/common";
 
 var list = [15, 1, 8],
     stopList = [251, 1, 50],

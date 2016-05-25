@@ -8,7 +8,7 @@ requirejs.config({
         "promizr": "../../dist/promizr",
         "mocha": "../../bower_components/mocha/mocha",
         "should": "../../bower_components/should/should",
-        "sinon": "..././bower_components/sinon/sinon"
+        "sinon": "../../bower_components/sinon/index"
     },
 
     shim: {

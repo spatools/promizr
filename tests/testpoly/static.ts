@@ -1,12 +1,13 @@
 /// <reference path="tests.d.ts" />
 
-import abstract = require("polyfill/abstract");
-import Promise = require("polyfill/class");
-import tasks = require("polyfill/tasks");
+import * as sinon from "sinon";
+import * as abstract from "polyfill/abstract";
+import * as tasks from "polyfill/tasks";
+import * as commonHelpers from "./helpers/common";
+import * as reactionsHelpers from "./helpers/reactions";
+import * as capabilitiesHelpers from "./helpers/capabilities";
 import FakePromise = require("./helpers/fake-promise");
-import commonHelpers = require("./helpers/common");
-import reactionsHelpers = require("./helpers/reactions");
-import capabilitiesHelpers = require("./helpers/capabilities");
+import Promise = require("polyfill/class");
 
 describe("Promise Static", () => {
 

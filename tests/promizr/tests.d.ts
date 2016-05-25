@@ -1,8 +1,8 @@
-/// <reference path="../../dist/promise.d.ts" />
+/// <reference path="../../typings/globals/es2015-promise/index.d.ts" />
+/// <reference path="../../typings/globals/mocha/index.d.ts" />
+/// <reference path="../../typings/globals/should/index.d.ts" />
+/// <reference path="../../typings/modules/sinon/index.d.ts" />
 /// <reference path="../../dist/promizr.d.ts" />
-/// <reference path="../../typings/mocha/mocha.d.ts" />
-/// <reference path="../../typings/should/should.d.ts" />
-/// <reference path="../../typings/sinon/sinon.d.ts" />
 
 declare var require: any;
 declare var requirejs: any;

@@ -1,6 +1,7 @@
 /// <reference path="tests.d.ts" />
 
-import tasks = require("polyfill/tasks");
+import * as sinon from "sinon";
+import * as tasks from "polyfill/tasks";
 
 describe("Promise Task Queue", () => {
 

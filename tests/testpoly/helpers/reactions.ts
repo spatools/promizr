@@ -1,8 +1,9 @@
 /// <reference path="../tests.d.ts" />
 
+import * as sinon from "sinon";
+import * as abstract from "polyfill/abstract";
+import * as commonHelpers from "./common";
 import Promise = require("polyfill/class");
-import abstract = require("polyfill/abstract");
-import commonHelpers = require("./common");
 
 export function createFakeReaction(): PromiseReaction {
     return {

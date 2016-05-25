@@ -1,7 +1,8 @@
 ﻿/// <reference path="tests.d.ts" />
 
-import promizr = require("promizr");
-import common = require("./helpers/common");
+import * as sinon from "sinon";
+import * as promizr from "promizr";
+import * as common from "./helpers/common";
 
 var list = [15, 1, 8],
     stopList = [251, 1, 50];
@@ -222,9 +223,9 @@ describe("Promizr Flow Methods", () => {
                     sinon.assert.calledOnce(spy);
                     sinon.assert.calledWithExactly(spy, stopList[1]);
 
-                    sinon.assert.calledOnce(<SinonSpy>executors[stopList[0].toString()]);
-                    sinon.assert.calledOnce(<SinonSpy>executors[stopList[1].toString()]);
-                    sinon.assert.calledOnce(<SinonSpy>executors[stopList[2].toString()]);
+                    sinon.assert.calledOnce(executors[stopList[0].toString()] as sinon.SinonSpy);
+                    sinon.assert.calledOnce(executors[stopList[1].toString()] as sinon.SinonSpy);
+                    sinon.assert.calledOnce(executors[stopList[2].toString()] as sinon.SinonSpy);
                 }).then(done, done);
             });
 

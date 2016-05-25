@@ -1,11 +1,12 @@
 /// <reference path="tests.d.ts" />
 
-import abstract = require("polyfill/abstract");
+import * as sinon from "sinon";
+import * as abstract from "polyfill/abstract";
+import * as tasks from "polyfill/tasks";
+import * as commonHelpers from "./helpers/common";
+import * as reactionsHelpers from "./helpers/reactions";
 import Promise = require("polyfill/class");
-import tasks = require("polyfill/tasks");
 import FakePromise = require("./helpers/fake-promise");
-import commonHelpers = require("./helpers/common");
-import reactionsHelpers = require("./helpers/reactions");
 
 describe("Promise Abstract Operation", () => {
 
@@ -20,7 +21,7 @@ describe("Promise Abstract Operation", () => {
         });
 
         describe("when called", () => {
-            var triggerPromiseReactionStub: SinonStub;
+            var triggerPromiseReactionStub: sinon.SinonStub;
             beforeEach(() => { triggerPromiseReactionStub = sinon.stub(abstract, "triggerPromiseReaction"); });
             afterEach(() => { triggerPromiseReactionStub.restore(); });
 
@@ -80,7 +81,7 @@ describe("Promise Abstract Operation", () => {
         });
 
         describe("when called", () => {
-            var triggerPromiseReactionStub: SinonStub;
+            var triggerPromiseReactionStub: sinon.SinonStub;
             beforeEach(() => { triggerPromiseReactionStub = sinon.stub(abstract, "triggerPromiseReaction"); });
             afterEach(() => { triggerPromiseReactionStub.restore(); });
 
@@ -140,7 +141,7 @@ describe("Promise Abstract Operation", () => {
         });
 
         describe("when called", () => {
-            var triggerPromiseReactionStub: SinonStub;
+            var triggerPromiseReactionStub: sinon.SinonStub;
             beforeEach(() => { triggerPromiseReactionStub = sinon.stub(abstract, "triggerPromiseReaction"); });
             afterEach(() => { triggerPromiseReactionStub.restore(); });
 
@@ -208,7 +209,7 @@ describe("Promise Abstract Operation", () => {
     describe("triggerPromiseReactions", () => {
 
         describe("should call task.enqueue for each given reactions", () => {
-            var enqueueTaskStub: SinonStub;
+            var enqueueTaskStub: sinon.SinonStub;
             beforeEach(() => { enqueueTaskStub = sinon.stub(tasks, "enqueue"); });
             afterEach(() => { enqueueTaskStub.restore(); });
 

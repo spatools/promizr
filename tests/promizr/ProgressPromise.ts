@@ -1,6 +1,7 @@
 ﻿/// <reference path="tests.d.ts" />
 
-import promizr = require("promizr");
+import * as sinon from "sinon";
+import * as promizr from "promizr";
 import ProgressContext = require("./helpers/ProgressContext");
 
 describe("ProgressPromise class", () => {

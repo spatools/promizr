@@ -1,7 +1,7 @@
 /// <reference path="../tests.d.ts" />
 
+import * as abstract from "polyfill/abstract";
 import Promise = require("polyfill/class");
-import abstract = require("polyfill/abstract");
 
 export function createFakeCapability(): PromiseCapability<any> {
     return abstract.newPromiseCapability(Promise);

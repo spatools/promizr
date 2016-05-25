@@ -1,6 +1,6 @@
 ﻿/// <reference path="../tests.d.ts" />
 
-import promizr = require("promizr");
+import * as promizr from "promizr";
 
 class ProgressContext {
     public deferreds: promizr.ProgressPromiseDeferred<number, number>[];

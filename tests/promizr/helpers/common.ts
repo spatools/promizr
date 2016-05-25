@@ -1,6 +1,7 @@
 /// <reference path="../tests.d.ts" />
 
-import promizr = require("promizr");
+import { SinonSpy } from "sinon";
+import * as promizr from "promizr";
 
 if (!Function.prototype.bind) {
     Function.prototype.bind = function (oThis) {
@@ -44,7 +45,7 @@ export function createPromise<T>(): Promise<T> {
     return new Promise(noop);
 }
 
-export function createDeferreds<T>(list: T[]): PromiseCapability<void>[] {
+export function createDeferreds<T>(list: T[]): promizr.Deferred<void>[] {
     return list.map(() => {
         const dfd = promizr.defer<any>();
         dfd.promise = dfd.promise.then(promizr.timeout);
