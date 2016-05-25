@@ -1,6 +1,6 @@
 {
   "name": "promizr",
-  "version": "0.2.6",
+  "version": "0.2.7",
   "description": "ES6 Promise Extensions and utility methods + Polyfill which strictly follows ES6 specification",
   "authors": [
     "SPA Tools"
@@ -21,11 +21,5 @@
     "bower_components",
     "typings",
     "tests"
-  ],
-  "devDependencies": {
-    "requirejs": "^2.1.20",
-    "mocha": "^2.3.3",
-    "should": "^7.1.0",
-    "sinon": "http://sinonjs.org/releases/sinon-1.17.1.js"
-  }
+  ]
 }
