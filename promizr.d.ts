@@ -1,46 +1,5 @@
-/// <reference path="./promise.d.ts" />
 
 declare module promizr {
-/// <reference path="../_definitions.d.ts" />
-export interface ProgressPromiseCallback<P> {
-    (val: P): void;
-}
-export interface ProgressPromiseExecutor<T, P> {
-    (resolve: PromiseResolveFunction<T>, reject: PromiseRejectFunction, progress: ProgressPromiseCallback<P>): void;
-}
-export interface ProgressPromiseDeferred<T, P> {
-    promise: ProgressPromise<T, P>;
-    resolve: PromiseResolveFunction<T>;
-    reject: PromiseRejectFunction;
-    progress: ProgressPromiseCallback<P>;
-}
-export type ProgressPromiseable<T, P> = T | Thenable<T> | ProgressPromise<T, P>;
-export class ProgressPromise<T, P> implements Thenable<T> {
-    _innerPromise: Promise<T>;
-    _progress: P;
-    _progressesCallbacks: ProgressPromiseCallback<P>[];
-    constructor(executor: ProgressPromiseExecutor<T, P>);
-    progress(onProgress: ProgressPromiseCallback<P>): ProgressPromise<T, P>;
-    /**
-     * Create a new Promise by chaining given callback to current Promise
-     * @param {PromiseCallback} onFulfilled Callback to be called when Promise fulfills
-     * @param {PromiseCallback} [onRejected] Callback to be called when Promise fails
-     * @returns {Promise} Chained Promise
-     */
-    then<U>(onFulfilled: (value: T) => U | Thenable<U>): Promise<U>;
-    then<U>(onFulfilled: (value: T) => U | Thenable<U>, onRejected: PromiseErrorCallback<U>): Promise<U>;
-    /**
-     * The catch function allows to apply a callback on rejection handler.
-     * It is equivalent to promise.then(undefined, onRejected)
-     * @param {PromiseCallback} onRejected callback to be called whenever promise fail
-     * @returns {Promise} A chained Promise which handle error and fullfil
-     */
-    catch<U>(onRejected: PromiseErrorCallback<U>): Promise<U>;
-    static defer<T, P>(): ProgressPromiseDeferred<T, P>;
-    static all<T, P>(promises: ProgressPromiseable<T, P>[]): ProgressPromise<T[], P[]>;
-    static race<T, P>(promises: ProgressPromiseable<T, P>[]): ProgressPromise<T, P[]>;
-}
-
 /// <reference path="../_definitions.d.ts" />
 /** A function that return a Promise */
 export interface PromiseTaskExecutor<T> {
@@ -187,6 +146,46 @@ export function timesSeries<T>(times: number, task: PromiseTaskExecutor<T>): Pro
 export var nextTick: (cb: Function) => void;
 
 /// <reference path="../_definitions.d.ts" />
+export interface ProgressPromiseCallback<P> {
+    (val: P): void;
+}
+export interface ProgressPromiseExecutor<T, P> {
+    (resolve: (val?: T | PromiseLike<T>) => void, reject: (err?: any) => void, progress: (val?: P) => void): void;
+}
+export interface ProgressPromiseDeferred<T, P> {
+    resolve(val?: T | PromiseLike<T>): void;
+    reject(err?: any): void;
+    progress(val: P): void;
+    promise: ProgressPromise<T, P>;
+}
+export type ProgressPromiseable<T, P> = T | Thenable<T> | ProgressPromise<T, P>;
+export class ProgressPromise<T, P> implements Thenable<T> {
+    _innerPromise: Promise<T>;
+    _progress: P;
+    _progressesCallbacks: ProgressPromiseCallback<P>[];
+    constructor(executor: ProgressPromiseExecutor<T, P>);
+    progress(onProgress: ProgressPromiseCallback<P>): ProgressPromise<T, P>;
+    /**
+     * Create a new Promise by chaining given callback to current Promise
+     * @param {PromiseCallback} onFulfilled Callback to be called when Promise fulfills
+     * @param {PromiseCallback} [onRejected] Callback to be called when Promise fails
+     * @returns {Promise} Chained Promise
+     */
+    then<U>(onFulfilled: (value: T) => U | Thenable<U>): Promise<U>;
+    then<U>(onFulfilled: (value: T) => U | Thenable<U>, onRejected: (err?: any) => void | U): Promise<U>;
+    /**
+     * The catch function allows to apply a callback on rejection handler.
+     * It is equivalent to promise.then(undefined, onRejected)
+     * @param {PromiseCallback} onRejected callback to be called whenever promise fail
+     * @returns {Promise} A chained Promise which handle error and fullfil
+     */
+    catch<U>(onRejected: (err?: any) => void | U): Promise<U>;
+    static defer<T, P>(): ProgressPromiseDeferred<T, P>;
+    static all<T, P>(promises: ProgressPromiseable<T, P>[]): ProgressPromise<T[], P[]>;
+    static race<T, P>(promises: ProgressPromiseable<T, P>[]): ProgressPromise<T, P[]>;
+}
+
+/// <reference path="../_definitions.d.ts" />
 export interface QueueItemOptions<T, U> {
     data?: T;
     priority?: number;
@@ -229,7 +228,7 @@ export class Queue<T, U> {
     resume(): void;
     clear(): void;
     private insert(datas, before?);
-    protected createItem(data: T, results: U[], errors: any[], count: number, resolve: PromiseResolveFunction<U | U[]>, reject: PromiseRejectFunction): QueueItem<T, U>;
+    protected createItem(data: T, results: U[], errors: any[], count: number, resolve: (result: U | U[] | PromiseLike<U | U[]>) => void, reject: (err?: any) => void): QueueItem<T, U>;
     protected process(): void;
     protected onProcessEnd(): void;
 }
@@ -274,6 +273,11 @@ export interface TypedFunction<T> {
 export interface HashFunction {
     (args: any[]): string;
 }
+export interface Deferred<T> {
+    resolve(val?: T | PromiseLike<T>): void;
+    reject(err?: any): void;
+    promise: Promise<T>;
+}
 export function apply<T>(task: TypedFunction<T>, ...args: any[]): TypedFunction<T>;
 export function applyOn<T>(owner: any, task: string | TypedFunction<T>, ...args: any[]): TypedFunction<T>;
 export function partial<T>(task: TypedFunction<T>, ...args: any[]): TypedFunction<T>;
@@ -292,8 +296,8 @@ export function denodify<T>(owner: any, fn: Function, ...args: any[]): Promise<T
 export function denodify<T>(fn: Function, ...args: any[]): Promise<T>;
 export function uncallbackify<T>(owner: any, fn: Function, ...args: any[]): Promise<T>;
 export function uncallbackify<T>(fn: Function, ...args: any[]): Promise<T>;
-export function defer<T>(): PromiseCapability<T>;
-export function polyfill(): typeof Promise;
+export function defer<T>(): Deferred<T>;
+export function polyfill(): PromiseConstructorLike;
 
 }
 

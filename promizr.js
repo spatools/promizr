@@ -11,98 +11,7 @@
     }
 }(this, function (exports) {
 /// <reference path="../_definitions.d.ts" />
-function isProgressPromise(p) {
-    return "progress" in p;
-}
-function createProgressFunction(p) {
-    return function (val) {
-        var cbs = p._progressesCallbacks, len = cbs.length;
-        for (var i = 0; i < len; i++) {
-            cbs[i].call(undefined, val);
-        }
-        p._progress = val;
-    };
-}
-function initAllProgresses(promises, progress) {
-    var len = promises.length, progresses = new Array(len);
-    var i = 0, p;
-    for (; i < len; i++) {
-        p = promises[i];
-        progresses[i] = undefined;
-        if (isProgressPromise(p)) {
-            p.progress(initAllProgressFunction.bind(undefined, progress, progresses, i));
-        }
-    }
-}
-function initAllProgressFunction(progress, progresses, index, val) {
-    progresses[index] = val;
-    progress(progresses);
-}
-function cleaner() {
-    this._progressesCallbacks = undefined;
-}
-var ProgressPromise = (function () {
-    function ProgressPromise(executor) {
-        var _this = this;
-        this._progress = undefined;
-        this._progressesCallbacks = [];
-        if (!(this instanceof ProgressPromise)) {
-            throw new TypeError("Failed to construct 'ProgressPromise': Please use the 'new' operator, this object constructor cannot be called as a function.");
-        }
-        this._innerPromise = new Promise(function (resolve, reject) {
-            executor(resolve, reject, createProgressFunction(_this));
-        });
-        var clean = cleaner.bind(this);
-        this._innerPromise.then(clean, clean);
-    }
-    ;
-    ProgressPromise.prototype.progress = function (onProgress) {
-        if (this._progressesCallbacks) {
-            this._progressesCallbacks.push(onProgress);
-        }
-        if (typeof this._progress !== "undefined") {
-            onProgress.call(undefined, this._progress);
-        }
-        return this;
-    };
-    ProgressPromise.prototype.then = function (onFulfilled, onRejected) {
-        return this._innerPromise.then(onFulfilled, onRejected);
-    };
-    /**
-     * The catch function allows to apply a callback on rejection handler.
-     * It is equivalent to promise.then(undefined, onRejected)
-     * @param {PromiseCallback} onRejected callback to be called whenever promise fail
-     * @returns {Promise} A chained Promise which handle error and fullfil
-     */
-    ProgressPromise.prototype.catch = function (onRejected) {
-        return this._innerPromise.catch(onRejected);
-    };
-    ProgressPromise.defer = function () {
-        var def = {};
-        def.promise = new ProgressPromise(function (res, rej, pro) {
-            def.resolve = res;
-            def.reject = rej;
-            def.progress = pro;
-        });
-        return def;
-    };
-    ProgressPromise.all = function (promises) {
-        return new ProgressPromise(function (resolve, reject, progress) {
-            initAllProgresses(promises, progress);
-            Promise.all(promises).then(resolve, reject);
-        });
-    };
-    ProgressPromise.race = function (promises) {
-        return new ProgressPromise(function (resolve, reject, progress) {
-            initAllProgresses(promises, progress);
-            Promise.race(promises).then(resolve, reject);
-        });
-    };
-    return ProgressPromise;
-})();
-exports.ProgressPromise = ProgressPromise;
-
-/// <reference path="../_definitions.d.ts" />
+"use strict";
 /**
  * Applies the function  iterator  to each item in  arr , in parallel.
  * The  iterator  is called with an item from the list, the index of this item and the list itself.
@@ -355,6 +264,7 @@ function concatSeries(array, iterator) {
 exports.concatSeries = concatSeries;
 
 /// <reference path="../_definitions.d.ts" />
+"use strict";
 var own = Object.prototype.hasOwnProperty;
 function listSeries(array) {
     var p = Promise.resolve(), i = 0, len = array.length, results = [];
@@ -632,7 +542,7 @@ var nextTick = (function () {
                 if (event.source === win &&
                     typeof event.data === "string" &&
                     event.data.indexOf(messagePrefix) === 0) {
-                    var cb;
+                    var cb = void 0;
                     while ((cb = tempCallbacks.shift()) || tempCallbacks.length) {
                         cb();
                     }
@@ -658,6 +568,100 @@ var nextTick = (function () {
 }());
 
 /// <reference path="../_definitions.d.ts" />
+"use strict";
+function isProgressPromise(p) {
+    return "progress" in p;
+}
+function createProgressFunction(p) {
+    return function (val) {
+        var cbs = p._progressesCallbacks, len = cbs.length;
+        for (var i = 0; i < len; i++) {
+            cbs[i].call(undefined, val);
+        }
+        p._progress = val;
+    };
+}
+function initAllProgresses(promises, progress) {
+    var len = promises.length, progresses = new Array(len);
+    var i = 0, p;
+    for (; i < len; i++) {
+        p = promises[i];
+        progresses[i] = undefined;
+        if (isProgressPromise(p)) {
+            p.progress(initAllProgressFunction.bind(undefined, progress, progresses, i));
+        }
+    }
+}
+function initAllProgressFunction(progress, progresses, index, val) {
+    progresses[index] = val;
+    progress(progresses);
+}
+function cleaner() {
+    this._progressesCallbacks = undefined;
+}
+var ProgressPromise = (function () {
+    function ProgressPromise(executor) {
+        var _this = this;
+        this._progress = undefined;
+        this._progressesCallbacks = [];
+        if (!(this instanceof ProgressPromise)) {
+            throw new TypeError("Failed to construct 'ProgressPromise': Please use the 'new' operator, this object constructor cannot be called as a function.");
+        }
+        this._innerPromise = new Promise(function (resolve, reject) {
+            executor(resolve, reject, createProgressFunction(_this));
+        });
+        var clean = cleaner.bind(this);
+        this._innerPromise.then(clean, clean);
+    }
+    ;
+    ProgressPromise.prototype.progress = function (onProgress) {
+        if (this._progressesCallbacks) {
+            this._progressesCallbacks.push(onProgress);
+        }
+        if (typeof this._progress !== "undefined") {
+            onProgress.call(undefined, this._progress);
+        }
+        return this;
+    };
+    ProgressPromise.prototype.then = function (onFulfilled, onRejected) {
+        return this._innerPromise.then(onFulfilled, onRejected);
+    };
+    /**
+     * The catch function allows to apply a callback on rejection handler.
+     * It is equivalent to promise.then(undefined, onRejected)
+     * @param {PromiseCallback} onRejected callback to be called whenever promise fail
+     * @returns {Promise} A chained Promise which handle error and fullfil
+     */
+    ProgressPromise.prototype.catch = function (onRejected) {
+        return this._innerPromise.catch(onRejected);
+    };
+    ProgressPromise.defer = function () {
+        var def = {};
+        def.promise = new ProgressPromise(function (res, rej, pro) {
+            def.resolve = res;
+            def.reject = rej;
+            def.progress = pro;
+        });
+        return def;
+    };
+    ProgressPromise.all = function (promises) {
+        return new ProgressPromise(function (resolve, reject, progress) {
+            initAllProgresses(promises, progress);
+            Promise.all(promises).then(resolve, reject);
+        });
+    };
+    ProgressPromise.race = function (promises) {
+        return new ProgressPromise(function (resolve, reject, progress) {
+            initAllProgresses(promises, progress);
+            Promise.race(promises).then(resolve, reject);
+        });
+    };
+    return ProgressPromise;
+}());
+exports.ProgressPromise = ProgressPromise;
+
+/// <reference path="../_definitions.d.ts" />
+"use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
     function __() { this.constructor = d; }
@@ -805,7 +809,7 @@ var Queue = (function () {
         this.process();
     };
     return Queue;
-})();
+}());
 exports.Queue = Queue;
 var PriorityQueue = (function (_super) {
     __extends(PriorityQueue, _super);
@@ -880,7 +884,7 @@ var PriorityQueue = (function (_super) {
         return a.priority - b.priority;
     };
     return PriorityQueue;
-})(Queue);
+}(Queue));
 exports.PriorityQueue = PriorityQueue;
 var TaskQueue = (function (_super) {
     __extends(TaskQueue, _super);
@@ -888,7 +892,7 @@ var TaskQueue = (function (_super) {
         _super.call(this, function (item) { return item(); }, limit, list);
     }
     return TaskQueue;
-})(Queue);
+}(Queue));
 exports.TaskQueue = TaskQueue;
 var PriorityTaskQueue = (function (_super) {
     __extends(PriorityTaskQueue, _super);
@@ -896,7 +900,7 @@ var PriorityTaskQueue = (function (_super) {
         _super.call(this, function (item) { return item(); }, limit, list);
     }
     return PriorityTaskQueue;
-})(PriorityQueue);
+}(PriorityQueue));
 exports.PriorityTaskQueue = PriorityTaskQueue;
 function queue(worker, limit, list) {
     return new Queue(worker, limit, list);
@@ -939,6 +943,7 @@ function parallelLimit(tasks, limit) {
 exports.parallelLimit = parallelLimit;
 
 /// <reference path="../_definitions.d.ts" />
+"use strict";
 function apply(task) {
     var args = [];
     for (var _i = 1; _i < arguments.length; _i++) {
