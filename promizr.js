@@ -944,6 +944,7 @@ exports.parallelLimit = parallelLimit;
 
 /// <reference path="../_definitions.d.ts" />
 "use strict";
+var slice = Array.prototype.slice;
 function apply(task) {
     var args = [];
     for (var _i = 1; _i < arguments.length; _i++) {
@@ -1000,8 +1001,8 @@ function tap(task) {
         args[_i - 1] = arguments[_i];
     }
     return function (result) {
-        task.apply(null, args);
-        return result;
+        return Promise.resolve(task.apply(null, args))
+            .then(function () { return result; });
     };
 }
 exports.tap = tap;
@@ -1041,7 +1042,8 @@ function memoize(task, hash) {
         }
     }
     function result() {
-        var args = Array.prototype.slice.apply(arguments), hashed, cached;
+        var args = slice.apply(arguments);
+        var hashed, cached;
         if (haveToHash) {
             hashed = hasher(args);
             cached = cache[hashed];
@@ -1089,7 +1091,7 @@ function immediate() {
 }
 exports.immediate = immediate;
 function module() {
-    var args = Array.prototype.slice.call(arguments);
+    var args = slice.call(arguments);
     if (args.length === 0) {
         return Promise.resolve();
     }
@@ -1112,64 +1114,90 @@ function module() {
     });
 }
 exports.module = module;
-function denodify() {
-    var args = [];
-    for (var _i = 0; _i < arguments.length; _i++) {
-        args[_i - 0] = arguments[_i];
-    }
-    var fn = args[1], owner = args[0];
+function denodify(ownerOrFn) {
+    var args = arguments;
+    var owner = args[0], fn = args[1], num = 2;
     if (typeof owner === "function" && typeof fn !== "function") {
         fn = owner;
-        owner = null;
+        owner = undefined;
+        num = 1;
     }
-    return new Promise(function (resolve, reject) {
-        function callback(err) {
-            if (err) {
-                return reject(err);
-            }
-            var result = Array.prototype.slice.call(arguments, 1);
-            if (result.length === 1) {
-                result = result[0];
-            }
-            resolve(result);
-        }
-        fn.call(owner, args.concat([callback]));
-    });
+    return promisify(owner, fn).apply(null, slice.call(args, num));
 }
 exports.denodify = denodify;
-function uncallbackify() {
-    var args = [];
-    for (var _i = 0; _i < arguments.length; _i++) {
-        args[_i - 0] = arguments[_i];
-    }
-    var fn = args[1], owner = args[0];
+function promisify(owner, fn) {
     if (typeof owner === "function" && typeof fn !== "function") {
         fn = owner;
-        owner = null;
+        owner = undefined;
     }
-    return new Promise(function (resolve, reject) {
-        function success() {
-            var result = Array.prototype.slice.call(arguments, 0);
-            if (result.length === 1) {
-                result = result[0];
+    return function () {
+        var args = slice.call(arguments);
+        return new Promise(function (resolve, reject) {
+            args.push(callback);
+            fn.apply(owner, args);
+            function callback(err) {
+                if (err) {
+                    return reject(err);
+                }
+                var result = slice.call(arguments, 1);
+                if (result.length === 0) {
+                    return resolve();
+                }
+                if (result.length === 1) {
+                    result = result[0];
+                }
+                resolve(result);
             }
-            resolve(result);
-        }
-        function error() {
-            var err = Array.prototype.slice.call(arguments, 0);
-            if (err.length === 1) {
-                err = err[0];
-            }
-            if (!(err instanceof Error)) {
-                err = new Error(err.toString());
-                err.innerError = err;
-            }
-            reject(err);
-        }
-        fn.call(owner, args.concat([success, error]));
-    });
+        });
+    };
+}
+exports.promisify = promisify;
+function uncallbackify(ownerOrFn) {
+    var args = arguments;
+    var owner = args[0], fn = args[1], num = 2;
+    if (typeof owner === "function" && typeof fn !== "function") {
+        fn = owner;
+        owner = undefined;
+        num = 1;
+    }
+    return cbpromisify(owner, fn).apply(null, slice.call(args, num));
 }
 exports.uncallbackify = uncallbackify;
+function cbpromisify(owner, fn) {
+    if (typeof owner === "function" && typeof fn !== "function") {
+        fn = owner;
+        owner = undefined;
+    }
+    return function () {
+        var args = slice.call(arguments);
+        return new Promise(function (resolve, reject) {
+            args.push(success, error);
+            fn.apply(owner, args);
+            function success() {
+                var result = slice.call(arguments);
+                if (result.length === 0) {
+                    return resolve();
+                }
+                if (result.length === 1) {
+                    result = result[0];
+                }
+                resolve(result);
+            }
+            function error() {
+                var err = slice.call(arguments);
+                if (err.length === 1) {
+                    err = err[0];
+                }
+                if (!(err instanceof Error)) {
+                    err = new Error(err.toString());
+                    err.innerError = err;
+                }
+                reject(err);
+            }
+        });
+    };
+}
+exports.cbpromisify = cbpromisify;
 function defer() {
     var dfd = { resolve: null, reject: null, promise: null };
     dfd.promise = new Promise(function (resolve, reject) {

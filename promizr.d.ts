@@ -282,7 +282,7 @@ export function apply<T>(task: TypedFunction<T>, ...args: any[]): TypedFunction<
 export function applyOn<T>(owner: any, task: string | TypedFunction<T>, ...args: any[]): TypedFunction<T>;
 export function partial<T>(task: TypedFunction<T>, ...args: any[]): TypedFunction<T>;
 export function partialOn<T>(owner: any, task: string | TypedFunction<T>, ...args: any[]): TypedFunction<T>;
-export function tap<T, U>(task: TypedFunction<T>, ...args: any[]): (arg: U) => U;
+export function tap<T, U>(task: TypedFunction<T>, ...args: any[]): (arg: U) => Promise<U>;
 export function tapOn<T, U>(owner: any, task: string | TypedFunction<T>, ...args: any[]): (arg: U) => U;
 export function memoize<T>(task: PromiseTaskExecutor<T>, hash?: boolean | HashFunction): PromiseTaskExecutor<T>;
 export function log<T>(task: PromiseTaskExecutor<T>, ...args: any[]): Promise<T>;
@@ -294,8 +294,12 @@ export function module<T>(names: string[]): Promise<T[]>;
 export function module<T>(...names: string[]): Promise<T[]>;
 export function denodify<T>(owner: any, fn: Function, ...args: any[]): Promise<T>;
 export function denodify<T>(fn: Function, ...args: any[]): Promise<T>;
+export function promisify<T>(fn: Function): (...args: any[]) => Promise<T>;
+export function promisify<T>(owner: any, fn: Function): (...args: any[]) => Promise<T>;
 export function uncallbackify<T>(owner: any, fn: Function, ...args: any[]): Promise<T>;
 export function uncallbackify<T>(fn: Function, ...args: any[]): Promise<T>;
+export function cbpromisify<T>(fn: Function): (...args: any[]) => Promise<T>;
+export function cbpromisify<T>(owner: any, fn: Function): (...args: any[]) => Promise<T>;
 export function defer<T>(): Deferred<T>;
 export function polyfill(): PromiseConstructorLike;
 
