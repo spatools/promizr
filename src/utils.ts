@@ -15,6 +15,8 @@ export interface Deferred<T> {
     promise: Promise<T>;
 }
 
+const slice = Array.prototype.slice;
+
 export function apply<T>(task: TypedFunction<T>, ...args: any[]): TypedFunction<T> {
     return function () {
         return task.apply(null, args);
@@ -47,10 +49,10 @@ export function partialOn<T>(owner: any, task: string | TypedFunction<T>, ...arg
     };
 }
 
-export function tap<T, U>(task: TypedFunction<T>, ...args: any[]): (arg: U) => U {
+export function tap<T, U>(task: TypedFunction<T>, ...args: any[]): (arg: U) => Promise<U> {
     return function (result) {
-        task.apply(null, args);
-        return result;
+        return Promise.resolve(task.apply(null, args))
+            .then(() => result);
     };
 }
 export function tapOn<T, U>(owner: any, task: string | TypedFunction<T>, ...args: any[]): (arg: U) => U {
@@ -67,7 +69,7 @@ export function tapOn<T, U>(owner: any, task: string | TypedFunction<T>, ...args
 }
 
 export function memoize<T>(task: PromiseTaskExecutor<T>, hash?: boolean | HashFunction): PromiseTaskExecutor<T> {
-    var cache,
+    let cache,
         haveToHash = typeof hash !== "undefined",
         hasher: HashFunction;
 
@@ -92,8 +94,8 @@ export function memoize<T>(task: PromiseTaskExecutor<T>, hash?: boolean | HashFu
     }
 
     function result(): Promise<T> {
-        var args = Array.prototype.slice.apply(arguments),
-            hashed, cached;
+        const args = slice.apply(arguments);
+        let hashed, cached;
 
         if (haveToHash) {
             hashed = hasher(args);
@@ -147,7 +149,7 @@ export function module<T>(name: string): Promise<T>;
 export function module<T>(names: string[]): Promise<T[]>;
 export function module<T>(...names: string[]): Promise<T[]>;
 export function module<T>(): Promise<T | T[]> {
-    var args = Array.prototype.slice.call(arguments);
+    let args = slice.call(arguments);
     if (args.length === 0) {
         return Promise.resolve();
     }
@@ -172,73 +174,118 @@ export function module<T>(): Promise<T | T[]> {
 
 export function denodify<T>(owner: any, fn: Function, ...args: any[]): Promise<T>;
 export function denodify<T>(fn: Function, ...args: any[]): Promise<T>;
-export function denodify<T>(...args: any[]): Promise<T> {
-    var fn = args[1],
-        owner = args[0];
-
+export function denodify<T>(ownerOrFn: Function | any): Promise<T> {
+    const args = arguments;
+    let owner = args[0],
+        fn = args[1], 
+        num = 2;
+        
     if (typeof owner === "function" && typeof fn !== "function") {
         fn = owner;
-        owner = null;
+        owner = undefined;
+        num = 1;
     }
+    
+    return promisify(owner, fn).apply(null, slice.call(args, num));
+}
 
-    return new Promise((resolve, reject) => {
-        function callback(err) {
-            if (err) {
-                return reject(err);
+export function promisify<T>(fn: Function): (...args: any[]) => Promise<T>;
+export function promisify<T>(owner: any, fn: Function): (...args: any[]) => Promise<T>;
+export function promisify<T>(owner: any, fn?: Function): (...args: any[]) => Promise<T> {
+    if (typeof owner === "function" && typeof fn !== "function") {
+        fn = owner;
+        owner = undefined;
+    }
+    
+    return function () {
+        const args = slice.call(arguments);
+        
+        return new Promise((resolve, reject) => {
+            args.push(callback);
+            fn.apply(owner, args);
+            
+            function callback(err) {
+                if (err) {
+                    return reject(err);
+                }
+                
+                let result = slice.call(arguments, 1);
+                if (result.length === 0) {
+                    return resolve();
+                }
+                
+                if (result.length === 1) {
+                    result = result[0];
+                }
+                
+                resolve(result);
             }
-
-            var result = Array.prototype.slice.call(arguments, 1);
-            if (result.length === 1) {
-                result = result[0];
-            }
-
-            resolve(result);
-        }
-
-        fn.call(owner, args.concat([callback]));
-    });
+        });
+    };
 }
 
 export function uncallbackify<T>(owner: any, fn: Function, ...args: any[]): Promise<T>;
 export function uncallbackify<T>(fn: Function, ...args: any[]): Promise<T>;
-export function uncallbackify<T>(...args: any[]): Promise<T> {
-    var fn = args[1],
-        owner = args[0];
-
+export function uncallbackify<T>(ownerOrFn: Function | any): Promise<T> {
+    const args = arguments;
+    let owner = args[0],
+        fn = args[1],
+        num = 2;
+        
     if (typeof owner === "function" && typeof fn !== "function") {
         fn = owner;
-        owner = null;
+        owner = undefined;
+        num = 1;
     }
+    
+    return cbpromisify(owner, fn).apply(null, slice.call(args, num));
+}
 
-    return new Promise((resolve, reject) => {
-        function success() {
-            var result = Array.prototype.slice.call(arguments, 0);
-            if (result.length === 1) {
-                result = result[0];
+export function cbpromisify<T>(fn: Function): (...args: any[]) => Promise<T>;
+export function cbpromisify<T>(owner: any, fn: Function): (...args: any[]) => Promise<T>;
+export function cbpromisify<T>(owner: any, fn?: Function): (...args: any[]) => Promise<T> {
+    if (typeof owner === "function" && typeof fn !== "function") {
+        fn = owner;
+        owner = undefined;
+    }
+    
+    return function () {
+        const args = slice.call(arguments);
+        return new Promise((resolve, reject) => {
+            args.push(success, error);
+            fn.apply(owner, args);
+            
+            function success() {
+                let result = slice.call(arguments);
+                if (result.length === 0) {
+                    return resolve();
+                }
+                
+                if (result.length === 1) {
+                    result = result[0];
+                }
+                
+                resolve(result);
             }
-
-            resolve(result);
-        }
-        function error() {
-            var err = Array.prototype.slice.call(arguments, 0);
-            if (err.length === 1) {
-                err = err[0];
+            
+            function error() {
+                let err = slice.call(arguments);
+                if (err.length === 1) {
+                    err = err[0];
+                }
+                
+                if (!(err instanceof Error)) {
+                    err = new Error(err.toString());
+                    err.innerError = err;
+                }
+                reject(err);
             }
-
-            if (!(err instanceof Error)) {
-                err = new Error(err.toString());
-                err.innerError = err;
-            }
-
-            reject(err);
-        }
-
-        fn.call(owner, args.concat([success, error]));
-    });
+        });
+    };
 }
 
 export function defer<T>(): Deferred<T> {
-    var dfd = { resolve: null, reject: null, promise: null } as Deferred<any>;
+    const dfd = { resolve: null, reject: null, promise: null } as Deferred<any>;
 
     dfd.promise = new Promise((resolve, reject) => {
         dfd.resolve = resolve;
