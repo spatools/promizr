@@ -16,7 +16,7 @@ export interface ProgressPromiseDeferred<T, P> {
     promise: ProgressPromise<T, P>;
 }
 
-export type ProgressPromiseable<T, P> = T | Thenable<T> | ProgressPromise<T, P>;
+export type ProgressPromiseable<T, P> = T | PromiseLike<T> | ProgressPromise<T, P>;
 
 function isProgressPromise<T, P>(p: ProgressPromiseable<T, P>): p is ProgressPromise<T, P> {
     return "progress" in p;
@@ -63,7 +63,7 @@ function cleaner() {
     this._progressesCallbacks = undefined;
 }
 
-export class ProgressPromise<T, P> implements Thenable<T> {
+export class ProgressPromise<T, P> implements PromiseLike<T> {
     public _innerPromise: Promise<T>;
     public _progress: P = undefined;
     public _progressesCallbacks: ProgressPromiseCallback<P>[] = [];
@@ -99,9 +99,9 @@ export class ProgressPromise<T, P> implements Thenable<T> {
      * @param {PromiseCallback} [onRejected] Callback to be called when Promise fails
      * @returns {Promise} Chained Promise
      */
-    public then<U>(onFulfilled: (value: T) => U | Thenable<U>): Promise<U>;
-    public then<U>(onFulfilled: (value: T) => U | Thenable<U>, onRejected: (err?: any) => void | U): Promise<U>;
-    public then<U>(onFulfilled: (value: T) => U | Thenable<U>, onRejected?: (err?: any) => void | U): Promise<U> {
+    public then<U>(onFulfilled: (value: T) => U | PromiseLike<U>): Promise<U>;
+    public then<U>(onFulfilled: (value: T) => U | PromiseLike<U>, onRejected: (err?: any) => void | U): Promise<U>;
+    public then<U>(onFulfilled: (value: T) => U | PromiseLike<U>, onRejected?: (err?: any) => void | U): Promise<U> {
         return this._innerPromise.then(onFulfilled, onRejected);
     }
 
