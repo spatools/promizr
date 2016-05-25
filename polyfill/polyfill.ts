@@ -1,4 +1,5 @@
-/// <reference path="../_definitions.d.ts" />
+/// <reference path="promise.d.ts" />
+declare const root, require;
 
 function isWellImplemented(P) {
     var resolve;

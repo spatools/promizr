@@ -1,4 +1,4 @@
-export var waiting = undefined;
-export var unresolved = "unresolved";
-export var resolved = "has-resolution";
-export var rejected = "has-rejection";
+export const waiting = undefined;
+export const unresolved = "unresolved";
+export const resolved = "has-resolution";
+export const rejected = "has-rejection";
