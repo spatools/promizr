@@ -158,8 +158,8 @@ export interface ProgressPromiseDeferred<T, P> {
     progress(val: P): void;
     promise: ProgressPromise<T, P>;
 }
-export type ProgressPromiseable<T, P> = T | Thenable<T> | ProgressPromise<T, P>;
-export class ProgressPromise<T, P> implements Thenable<T> {
+export type ProgressPromiseable<T, P> = T | PromiseLike<T> | ProgressPromise<T, P>;
+export class ProgressPromise<T, P> implements PromiseLike<T> {
     _innerPromise: Promise<T>;
     _progress: P;
     _progressesCallbacks: ProgressPromiseCallback<P>[];
@@ -171,8 +171,8 @@ export class ProgressPromise<T, P> implements Thenable<T> {
      * @param {PromiseCallback} [onRejected] Callback to be called when Promise fails
      * @returns {Promise} Chained Promise
      */
-    then<U>(onFulfilled: (value: T) => U | Thenable<U>): Promise<U>;
-    then<U>(onFulfilled: (value: T) => U | Thenable<U>, onRejected: (err?: any) => void | U): Promise<U>;
+    then<U>(onFulfilled: (value: T) => U | PromiseLike<U>): Promise<U>;
+    then<U>(onFulfilled: (value: T) => U | PromiseLike<U>, onRejected: (err?: any) => void | U): Promise<U>;
     /**
      * The catch function allows to apply a callback on rejection handler.
      * It is equivalent to promise.then(undefined, onRejected)
