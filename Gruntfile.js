@@ -177,6 +177,7 @@ module.exports = function (grunt) {
         
         mocha: {
             options: {
+                log: true,
                 run: false
             },
             testpzr: ["<%= paths.testpzr %>/index.html"],
@@ -326,13 +327,13 @@ module.exports = function (grunt) {
     grunt.registerTask("promizr", ["tslint:src", "ts:src", "concat:dist", "wrapper:dist", "uglify:dist", "concat:decla", "wrapper:decla", "clean:src"]);
     grunt.registerTask("build", ["polyfill", "promizr"]);
     
-    grunt.registerTask("test-promizr", ["promizr", "dev-testpzr", "mocha:testpzr", "clean:testpzr"]);
+    grunt.registerTask("test-promizr", ["build", "dev-testpzr", "mocha:testpzr", "clean:testpzr"]);
     grunt.registerTask("test-polyfill", ["dev-polyfill", "dev-testpoly", "mocha:testpoly", "clean:testpoly"]);
-    grunt.registerTask("test", ["dev-polyfill", "promizr", "dev-testpoly", "dev-testpzr", "mocha", "clean:test"]);
+    grunt.registerTask("test", ["dev-polyfill", "build", "dev-testpoly", "dev-testpzr", "mocha", "clean:test"]);
     
-    grunt.registerTask("btest-promizr", ["promizr", "dev-testpzr", "connect:testpzr", "watch"]);
+    grunt.registerTask("btest-promizr", ["build", "dev-testpzr", "connect:testpzr", "watch"]);
     grunt.registerTask("btest-polyfill", ["dev-polyfill", "dev-testpoly", "connect:testpoly", "watch"]);
-    grunt.registerTask("btest", ["promizr", "dev-polyfill", "dev-testpoly", "dev-testpzr", "connect:test", "watch"]);
+    grunt.registerTask("btest", ["build", "dev-polyfill", "dev-testpoly", "dev-testpzr", "connect:test", "watch"]);
     
     grunt.registerTask("nuget", ["nugetpack", "nugetpush"]);
     grunt.registerTask("prepublish", ["build", "copy:publish", "buildcontrol:dist"]);
