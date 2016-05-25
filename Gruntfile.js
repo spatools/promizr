@@ -9,15 +9,9 @@ module.exports = function (grunt) {
     });
     require("time-grunt")(grunt); // Time how long tasks take. Can help when optimizing build times
     
-    var pkg = require("./package.json"),
-        options = {
-            dev: grunt.option("dev")
-        };
-    
-    // Define the configuration for all the tasks
-    grunt.initConfig({
-        // Configurable paths
-        paths: {
+    var 
+        pkg = require("./package.json"),
+        paths = {
             src: "src",
             polyfill: "polyfill",
             build: "build",
@@ -28,6 +22,14 @@ module.exports = function (grunt) {
             testpzr: "tests/promizr",
             testpoly: "tests/testpoly"
         },
+        options = {
+            dev: grunt.option("dev")
+        };
+    
+    // Define the configuration for all the tasks
+    grunt.initConfig({
+        // Configurable paths
+        paths: paths,
         pkg: pkg,
         
         ts: {
@@ -142,8 +144,7 @@ module.exports = function (grunt) {
             publish: {
                 files: [{
                     expand: true,
-                    cwd: "./",
-                    src: ["{bower,package}.json", "README.md", "LICENSE"],
+                    src: ["README.md", "LICENSE"],
                     dest: "<%= paths.dist %>/"
                 }]
             }
@@ -315,7 +316,21 @@ module.exports = function (grunt) {
                 grunt.log.ok("File '" + src + "' wrapped using template '" + options.template + "'");
             });
         });
-
+    });
+    
+    grunt.registerTask("fixpkgs", "Fix package.json", function () {
+        fixPkg("package.json");
+        fixPkg("bower.json");
+        
+        function fixPkg(file) {
+            var fileJSON = grunt.file.readJSON(file);
+                
+            delete fileJSON.scripts;
+            delete fileJSON.devDependencies;
+            
+            grunt.file.write(paths.dist + "/" + file, JSON.stringify(fileJSON, null, 2));
+            grunt.log.ok(paths.dist + "/" + file + " created!");
+        }
     });
     
     grunt.registerTask("dev-promizr", ["tslint:src", "ts:dev"]);
@@ -337,7 +352,7 @@ module.exports = function (grunt) {
     
     grunt.registerTask("nuget", ["nugetpack", "nugetpush"]);
     grunt.registerTask("prepublish", ["build", "copy:publish", "buildcontrol:dist"]);
-    grunt.registerTask("publish", ["build", "copy:publish", "buildcontrol:publish", "nuget"]);
+    grunt.registerTask("publish", ["build", "copy:publish", "fixpkgs", "buildcontrol:publish", "nuget"]);
     
     grunt.registerTask("default", ["clean:test", "polyfill", "test"]);
 };

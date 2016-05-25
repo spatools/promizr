@@ -1,6 +1,6 @@
 {
   "name": "promizr",
-  "version": "0.2.6",
+  "version": "0.2.7",
   "description": "ES6 Promise Extensions and utility methods + Polyfill which strictly follows ES6 specification",
   "author": "SPA Tools",
   "main": "promizr.js",
