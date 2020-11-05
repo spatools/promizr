@@ -1,12 +1,5 @@
-﻿/// <reference path="../_definitions.d.ts" />
-
-export interface ProgressPromiseCallback<P> {
-    (val: P): void;
-}
-
-export interface ProgressPromiseExecutor<T, P> {
-    (resolve: (val?: T | PromiseLike<T>) => void, reject: (err?: any) => void, progress: (val?: P) => void): void;
-}
+﻿export type ProgressPromiseCallback<P> = (val: P) => void;
+export type ProgressPromiseExecutor<T, P> = (resolve: (value?: T | PromiseLike<T>) => void, reject: (reason?: any) => void, progress: ProgressPromiseCallback<P>) => void;
 
 export interface ProgressPromiseDeferred<T, P> {
     resolve(val?: T | PromiseLike<T>): void;
@@ -16,57 +9,14 @@ export interface ProgressPromiseDeferred<T, P> {
     promise: ProgressPromise<T, P>;
 }
 
-export type ProgressPromiseable<T, P> = T | PromiseLike<T> | ProgressPromise<T, P>;
-
-function isProgressPromise<T, P>(p: ProgressPromiseable<T, P>): p is ProgressPromise<T, P> {
-    return "progress" in p;
-}
-
-function createProgressFunction<T, P>(p: ProgressPromise<T, P>): ProgressPromiseCallback<P> {
-    return (val: P) => {
-        const
-            cbs = p._progressesCallbacks,
-            len = cbs.length;
-
-        for (let i = 0; i < len; i++) {
-            cbs[i].call(undefined, val);
-        }
-
-        p._progress = val;
-    };
-}
-
-function initAllProgresses<T, P>(promises: ProgressPromiseable<T, P>[], progress: ProgressPromiseCallback<P[]>): void {
-    const
-        len = promises.length,
-        progresses: P[] = new Array(len);
-
-    let i = 0,
-        p: ProgressPromiseable<T, P>;
-
-    for (; i < len; i++) {
-        p = promises[i];
-        progresses[i] = undefined;
-
-        if (isProgressPromise(p)) {
-            p.progress(initAllProgressFunction.bind(undefined, progress, progresses, i));
-        }
-    }
-}
-
-function initAllProgressFunction<T, P>(progress: ProgressPromiseCallback<P[]>, progresses: P[], index: number, val: P): void {
-    progresses[index] = val;
-    progress(progresses);
-}
-
-function cleaner() {
-    this._progressesCallbacks = undefined;
+export function isProgressPromise<T, P>(p: T | PromiseLike<T>): p is ProgressPromise<T, P> {
+    return "progress" in p && "then" in p;
 }
 
 export class ProgressPromise<T, P> implements PromiseLike<T> {
-    public _innerPromise: Promise<T>;
-    public _progress: P = undefined;
-    public _progressesCallbacks: ProgressPromiseCallback<P>[] = [];
+    private _innerPromise: Promise<T>;
+    protected _progress: P | undefined = undefined;
+    protected _progressesCallbacks: Array<ProgressPromiseCallback<P>> = [];
 
     constructor(executor: ProgressPromiseExecutor<T, P>) {
         if (!(this instanceof ProgressPromise)) {
@@ -74,12 +24,12 @@ export class ProgressPromise<T, P> implements PromiseLike<T> {
         }
 
         this._innerPromise = new Promise((resolve, reject) => {
-            executor(resolve, reject, createProgressFunction(this));
+            executor(resolve, reject, this.createProgressFunction());
         });
 
-        const clean = cleaner.bind(this);
+        const clean = this.cleaner.bind(this);
         this._innerPromise.then(clean, clean);
-    };
+    }
 
     public progress(onProgress: ProgressPromiseCallback<P>): ProgressPromise<T, P> {
         if (this._progressesCallbacks) {
@@ -95,24 +45,22 @@ export class ProgressPromise<T, P> implements PromiseLike<T> {
 
     /**
      * Create a new Promise by chaining given callback to current Promise
-     * @param {PromiseCallback} onFulfilled Callback to be called when Promise fulfills
-     * @param {PromiseCallback} [onRejected] Callback to be called when Promise fails
-     * @returns {Promise} Chained Promise
+     * @param onfulfilled Callback to be called when Promise fulfills
+     * @param onrejected Callback to be called when Promise fails
+     * @returns Chained Promise
      */
-    public then<U>(onFulfilled: (value: T) => U | PromiseLike<U>): Promise<U>;
-    public then<U>(onFulfilled: (value: T) => U | PromiseLike<U>, onRejected: (err?: any) => void | U): Promise<U>;
-    public then<U>(onFulfilled: (value: T) => U | PromiseLike<U>, onRejected?: (err?: any) => void | U): Promise<U> {
-        return this._innerPromise.then(onFulfilled, onRejected);
+    public then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): Promise<TResult1 | TResult2> {
+        return this._innerPromise.then(onfulfilled, onrejected);
     }
 
     /**
      * The catch function allows to apply a callback on rejection handler.
      * It is equivalent to promise.then(undefined, onRejected)
-     * @param {PromiseCallback} onRejected callback to be called whenever promise fail
-     * @returns {Promise} A chained Promise which handle error and fullfil
+     * @param onrejected callback to be called whenever promise fail
+     * @returns A chained Promise which handle error and fullfil
      */
-    public catch<U>(onRejected: (err?: any) => void | U): Promise<U> {
-        return this._innerPromise.catch(onRejected);
+    public catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): Promise<T | TResult> {
+        return this._innerPromise.catch(onrejected);
     }
 
     public static defer<T, P>(): ProgressPromiseDeferred<T, P> {
@@ -126,16 +74,55 @@ export class ProgressPromise<T, P> implements PromiseLike<T> {
         return def;
     }
 
-    public static all<T, P>(promises: ProgressPromiseable<T, P>[]): ProgressPromise<T[], P[]> {
-        return new ProgressPromise<T[], P[]>((resolve, reject, progress) => {
+    public static all<T, P>(promises: Array<T | PromiseLike<T>>): ProgressPromise<T[], Array<P | undefined>> {
+        return new ProgressPromise<T[], Array<P | undefined>>((resolve, reject, progress) => {
             initAllProgresses(promises, progress);
             Promise.all(promises).then(resolve, reject);
         });
     }
-    public static race<T, P>(promises: ProgressPromiseable<T, P>[]): ProgressPromise<T, P[]> {
-        return new ProgressPromise<T, P[]>((resolve, reject, progress) => {
+    public static race<T, P>(promises: Array<PromiseLike<T>>): ProgressPromise<T, Array<P | undefined>> {
+        return new ProgressPromise<T, Array<P | undefined>>((resolve, reject, progress) => {
             initAllProgresses(promises, progress);
             Promise.race(promises).then(resolve, reject);
         });
     }
+
+    private cleaner(): void {
+        this._progressesCallbacks = [];
+    }
+
+    private createProgressFunction(): ProgressPromiseCallback<P> {
+        return (val: P) => {
+            const
+                cbs = this._progressesCallbacks,
+                len = cbs.length;
+
+            for (let i = 0; i < len; i++) {
+                cbs[i].call(undefined, val);
+            }
+
+            this._progress = val;
+        };
+    }
+}
+
+function initAllProgresses<T, P>(promises: Array<T | PromiseLike<T>>, progress: ProgressPromiseCallback<Array<P | undefined>>): void {
+    const len = promises.length;
+    const progresses = new Array<P | undefined>(len);
+
+    for (let i = 0; i < len; i++) {
+        const p = promises[i];
+        progresses[i] = undefined;
+
+        if (isProgressPromise<T, P>(p)) {
+            p.progress(createAllProgressCallback(progress, progresses, i));
+        }
+    }
+}
+
+function createAllProgressCallback<P>(progress: ProgressPromiseCallback<Array<P | undefined>>, progresses: Array<P | undefined>, index: number): (val: P) => void {
+    return (val: P) => {
+        progresses[index] = val;
+        progress(progresses);
+    };
 }
