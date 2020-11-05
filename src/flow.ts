@@ -1,228 +1,204 @@
-﻿/// <reference path="../_definitions.d.ts" />
+﻿import type * as Tuples from "./tuples";
 
-const own = Object.prototype.hasOwnProperty;
+import { ensure, EnsurePromise, PromiseExecutor } from "./utils";
 
-export interface PromiseTaskExecutorObject<T> {
-    [key: string]: () => Promise<T>;
-}
+export type PromiseTaskExecutor<T = any> = () => T | Promise<T>;
+export type PromiseTaskExecutorObject<T> = Record<string, () => Promise<T>>;
+export type PromizrObjectResult<T> = { [K in keyof T]: T[K] extends () => Promise<infer R> ? R : T[K]; }
 
-export interface PromiseSeriesObjectResult<T> {
-    [key: string]: T;
-}
-
-function listSeries<T>(array: PromiseTaskExecutor<T>[]): Promise<T[]> {
-    var p = Promise.resolve(),
-        i = 0, len = array.length,
-        results = [];
-
-    function capture(index: number): Promise<void> {
-        return array[index]().then(result => {
-            results.push(result);
-        });
-    }
-
-    for (; i < len; i++) {
-        p = p.then(capture.bind(null, i));
+function listSeries<T>(array: Array<PromiseTaskExecutor<T>>): Promise<T[]> {
+    const results: T[] = [];
+    const len = array.length;
+    let p = ensure();
+    for (let i = 0; i < len; i++) {
+        p = p.then(createIterator(array[i]));
     }
 
     return p.then(() => results);
-}
-function objectSeries<T>(obj: PromiseTaskExecutorObject<T>): Promise<PromiseSeriesObjectResult<T>> {
-    var p = Promise.resolve(),
-        results = {},
-        key: string;
 
-    function capture(key: string): Promise<void> {
-        return obj[key]().then(result => {
-            results[key] = result;
-        });
+    function createIterator(executor: PromiseTaskExecutor<T>): () => Promise<void> {
+        return function iterator(): Promise<void> {
+            return ensure(executor()).then(result => { results.push(result); });
+        }
     }
+}
 
-    for (key in obj) {
-        if (own.call(obj, key)) {
-            p = p.then(capture.bind(null, key));
+function objectSeries<T extends Record<string, unknown>>(obj: T): Promise<PromizrObjectResult<T>> {
+    const results: Record<string, unknown> = {};
+    let p = ensure();
+
+    for (const key in obj) {
+        if (typeof obj[key] === "function") {
+            p = p.then(createIterator(key, obj[key] as PromiseTaskExecutor<T>));
         }
     }
 
-    return p.then(() => results);
+    return p.then(() => results as PromizrObjectResult<T>);
+
+    function createIterator(key: string, executor: PromiseTaskExecutor<T>): () => Promise<void> {
+        return function iterator(): Promise<void> {
+            return ensure(executor()).then(result => { results[key] = result; });
+        }
+    }
 }
 
-export function series<T>(tasks: PromiseTaskExecutor<T>[]): Promise<T[]>;
-export function series<T>(tasks: PromiseTaskExecutorObject<T>): Promise<PromiseSeriesObjectResult<T>>;
-export function series<T>(tasks: PromiseTaskExecutor<T>[]|PromiseTaskExecutorObject<T>): Promise<T[]|PromiseSeriesObjectResult<T>> {
+export function series<T>(tasks: Array<PromiseTaskExecutor<T>>): Promise<T[]>;
+export function series<T extends Record<string, unknown>>(tasks: T): Promise<PromizrObjectResult<T>>;
+export function series(tasks: unknown): Promise<unknown> {
     return Array.isArray(tasks) ?
-        listSeries(<PromiseTaskExecutor<T>[]>tasks) :
-        objectSeries(<PromiseTaskExecutorObject<T>>tasks);
+        listSeries(tasks) :
+        objectSeries(tasks as Record<string, unknown>);
 }
 
 
-function listParallel<T>(array: PromiseTaskExecutor<T>[]): Promise<T[]> {
-    var promises = array.map(exec => exec());
+function listParallel<T>(array: Array<PromiseTaskExecutor<T>>): Promise<T[]> {
+    const promises = array.map(exec => exec());
     return Promise.all(promises);
 }
-function objectParallel<T>(obj: PromiseTaskExecutorObject<T>): Promise<PromiseSeriesObjectResult<T>> {
-    var promises = [],
-        results = {},
-        key: string;
+function objectParallel<T extends Record<string, unknown>>(obj: T): Promise<PromizrObjectResult<T>> {
+    const results: Record<string, unknown> = {};
+    const promises: Array<Promise<void>> = []
 
-    function capture(key: string): Promise<void> {
-        return obj[key]().then(result => {
-            results[key] = result;
-        });
-    }
-
-    for (key in obj) {
-        if (own.call(obj, key)) {
-            promises.push(capture(key));
+    for (const key in obj) {
+        if (typeof obj[key] === "function") {
+            promises.push(interator(key, obj[key] as PromiseTaskExecutor<T>));
         }
     }
 
-    return Promise.all(promises).then(() => results);
+    return Promise.all(promises).then(() => results as PromizrObjectResult<T>);
+
+    function interator(key: string, executor: PromiseTaskExecutor<T>): Promise<void> {
+        return ensure(executor()).then(result => { results[key] = result; });
+    }
 }
 
-export function parallel<T>(tasks: PromiseTaskExecutor<T>[]): Promise<T[]>;
-export function parallel<T>(tasks: PromiseTaskExecutorObject<T>): Promise<PromiseSeriesObjectResult<T>>;
-export function parallel<T>(tasks: PromiseTaskExecutor<T>[]|PromiseTaskExecutorObject<T>): Promise<T[]|PromiseSeriesObjectResult<T>> {
+export function parallel<T>(tasks: Array<PromiseTaskExecutor<T>>): Promise<T[]>;
+export function parallel<T extends Record<string, unknown>>(tasks: T): Promise<PromizrObjectResult<T>>;
+export function parallel(tasks: unknown): Promise<unknown> {
     return Array.isArray(tasks) ?
-        listParallel(<PromiseTaskExecutor<T>[]>tasks) :
-        objectParallel(<PromiseTaskExecutorObject<T>>tasks);
+        listParallel(tasks) :
+        objectParallel(tasks as Record<string, unknown>);
 }
 
 
 export function whilst<T>(test: () => boolean, task: PromiseTaskExecutor<T>): Promise<void> {
-    function next(): Promise<void> {
+    return Promise.resolve().then(next);
+
+    function next(): void | Promise<void> {
         if (test()) {
-            return task().then(next);
+            return ensure(task()).then(next);
         }
     }
-
-    return Promise.resolve().then(next);
 }
 
 export function doWhilst<T>(executor: PromiseTaskExecutor<T>, test: (res?: T) => boolean): Promise<void> {
+    return Promise.resolve().then(next);
+
     function next(): Promise<void> {
-        return executor().then(res => {
+        return ensure(executor()).then(res => {
             if (test(res)) {
                 return next();
             }
         });
     }
-
-    return Promise.resolve().then(next);
 }
 
-
 export function until<T>(test: () => boolean, task: PromiseTaskExecutor<T>): Promise<void> {
-    function next(): Promise<void> {
+    return Promise.resolve().then(next);
+
+    function next(): void | Promise<void> {
         if (!test()) {
-            return task().then(next);
+            return ensure(task()).then(next);
         }
     }
-
-    return Promise.resolve().then(next);
 }
 
 export function doUntil<T>(task: PromiseTaskExecutor<T>, test: (res?: T) => boolean): Promise<void> {
+    return Promise.resolve().then(next);
+
     function next(): Promise<void> {
-        return task().then(res => {
+        return ensure(task()).then(res => {
             if (!test(res)) {
                 return next();
             }
         });
     }
-
-    return Promise.resolve().then(next);
 }
-
 
 export function forever<T>(task: PromiseTaskExecutor<T>): Promise<void> {
-    function next(): Promise<void> {
-        return task().then(next);
-    }
-
     return Promise.resolve().then(next);
+
+    function next(): Promise<void> {
+        return ensure(task()).then(next);
+    }
 }
 
-export function waterfall<T>(tasks: PromiseTaskExecutor<any>[]): Promise<T> {
-    var p = Promise.resolve(),
-        i = 0, len = tasks.length;
+export function waterfall<T>(tasks: PromiseTaskExecutor[]): Promise<T> {
+    let p = ensure();
 
-    for (; i < len; i++) {
-        p = p.then(tasks[i]);
+    for (const task of tasks) {
+        p = p.then(task);
     }
 
-    return p;
+    return p as Promise<T>;
 }
 
+type GetFirstReturnType<T extends PromiseExecutor[]> = T extends [] ? void : ReturnType<Tuples.GetFirst<T>>;
+type GetLastReturnType<T extends PromiseExecutor[]> = T extends [] ? void : ReturnType<Tuples.GetLast<T>>;
 
-export function compose<T>(...tasks: PromiseTaskExecutor<any>[]): PromiseTaskExecutor<T> {
-    return function () {
-        var p = Promise.resolve(),
-            last = tasks.pop(),
-            self = this, args = arguments,
-            i = tasks.length - 1;
+export function compose<T extends PromiseExecutor[]>(...tasks: T): (...args: Parameters<Tuples.GetLast<T>>) => EnsurePromise<GetFirstReturnType<T>> {
+    return function (this: unknown, ...args: unknown[]): EnsurePromise<GetFirstReturnType<T>> {
+        const last = tasks.pop();
+        if (!last) return ensure() as Promise<any>;
 
-        p = p.then(() => last.apply(self, args));
+        let p = ensure();
+        p = p.then(() => last.apply(this, args));
 
-        for (; i >= 0; i--) {
+        for (let i = tasks.length - 1; i >= 0; i--) {
             p = p.then(tasks[i]);
         }
 
-        return p;
+        return p as EnsurePromise<GetFirstReturnType<T>>;
     };
 }
 
-export function seq<T>(...tasks: PromiseTaskExecutor<any>[]): PromiseTaskExecutor<T> {
-    return function () {
-        var p = Promise.resolve(),
-            first = tasks.shift(),
-            self = this, args = arguments,
-            i = 0, len = tasks.length;
+export function seq<T extends PromiseExecutor[]>(...tasks: T): (...args: Parameters<Tuples.GetFirst<T>>) => EnsurePromise<GetLastReturnType<T>> {
+    return function (this: unknown, ...args: unknown[]): EnsurePromise<GetLastReturnType<T>> {
+        const first = tasks.shift();
+        if (!first) return ensure() as Promise<any>;
 
-        p = p.then(() => first.apply(self, args));
+        let p = ensure();
+        p = p.then(() => first.apply(this, args));
 
-        for (; i < len; i++) {
+        const len = tasks.length;
+        for (let i = 0; i < len; i++) {
             p = p.then(tasks[i]);
         }
 
-        return p;
+        return p as EnsurePromise<GetLastReturnType<T>>;
     };
 }
 
-export function applyEach<T>(tasks: PromiseTaskExecutor<T>[], ...args: any[]): PromiseTaskExecutor<T[]>|Promise<T[]> {
-    if (args.length > 0) {
-        tasks = tasks.map(e => () => e.apply(null, args));
-        return parallel(tasks);
-    }
-    else {
-        return function () {
-            var args = arguments;
-            tasks = tasks.map(e => () => e.apply(this, args));
-            return parallel(tasks);
-        };
-    }
+export function applyEach<T extends PromiseExecutor[]>(tasks: T): (...args: Parameters<T[number]>) => EnsurePromise<ReturnType<T[number]>> {
+    return function (this: unknown, ...args: unknown[]): EnsurePromise<ReturnType<T[number]>> {
+        const iterators = tasks.map(e => () => e.apply(this, args));
+        return parallel(iterators) as EnsurePromise<ReturnType<T[number]>>;
+    };
 }
 
-export function applyEachSeries<T>(tasks: PromiseTaskExecutor<T>[], ...args: any[]): PromiseTaskExecutor<T[]>|Promise<T[]> {
-    if (args.length > 0) {
-        tasks = tasks.map(e => () => e.apply(null, args));
-        return series(tasks);
-    }
-    else {
-        return function () {
-            var args = arguments;
-            tasks = tasks.map(e => () => e.apply(this, args));
-            return series(tasks);
-        };
-    }
+export function applyEachSeries<T extends PromiseExecutor[]>(tasks: T): (...args: Parameters<T[number]>) => EnsurePromise<ReturnType<T[number]>> {
+    return function (this: unknown, ...args: unknown[]): EnsurePromise<ReturnType<T[number]>> {
+        const iterators = tasks.map(e => () => e.apply(this, args));
+        return series(iterators) as EnsurePromise<ReturnType<T[number]>>;
+    };
 }
 
 
 export function retry<T>(times: number, task: PromiseTaskExecutor<T>): Promise<T> {
-    var promise;
+    let promise: Promise<T>;
 
     try {
-        promise = Promise.resolve(task());
+        promise = ensure(task());
     }
     catch (e) {
         promise = Promise.reject(e);
@@ -238,10 +214,9 @@ export function retry<T>(times: number, task: PromiseTaskExecutor<T>): Promise<T
 }
 
 export function times<T>(times: number, task: PromiseTaskExecutor<T>): Promise<T[]> {
-    var results: Promise<T>[] = [],
-        i = times;
+    const results: Array<T | Promise<T>> = [];
 
-    for (; i > 0; i--) {
+    for (let i = times; i > 0; i--) {
         try {
             results.push(task());
         }
@@ -252,19 +227,19 @@ export function times<T>(times: number, task: PromiseTaskExecutor<T>): Promise<T
 
     return Promise.all(results);
 }
+
 export function timesSeries<T>(times: number, task: PromiseTaskExecutor<T>): Promise<T[]> {
-    var p = Promise.resolve<void>(),
-        results: T[] = [],
-        i = times;
+    const results: T[] = [];
 
-    function capture() {
-        return Promise.resolve(task()).then(result => { results.push(result); });
-    }
-
-    for (; i > 0; i--) {
+    let p = ensure();
+    for (let i = times; i > 0; i--) {
         p = p.then(capture);
     }
 
     return p.then(() => results);
+
+    function capture(): Promise<void> {
+        return ensure(task()).then(result => { results.push(result); });
+    }
 }
 

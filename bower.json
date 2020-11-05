@@ -3,7 +3,7 @@
   "version": "0.2.9",
   "description": "ES6 Promise Extensions and utility methods + Polyfill which strictly follows ES6 specification",
   "authors": [
-    "SPA Tools"
+    "Touchify"
   ],
   "license": "MIT",
   "homepage": "https://github.com/spatools/promizr",
@@ -17,15 +17,8 @@
   ],
   "ignore": [
     "**/.*",
+    "*config.js",
     "node_modules",
-    "bower_components",
-    "typings",
     "tests"
-  ],
-  "devDependencies": {
-    "requirejs": "^2.1.20",
-    "mocha": "^2.3.3",
-    "should": "^7.1.0",
-    "sinon": "http://sinonjs.org/releases/sinon-1.17.1.js"
-  }
+  ]
 }
