@@ -34,9 +34,9 @@
     "test:coverage": "npm run test -- -- --coverage",
     "test:ci": "npm run test:coverage -- --ci",
     "lint": "npm run lint:ts",
-    "lint:ts": "eslint --ext .ts *.ts {src,lib}/**/*.ts",
+    "lint:ts": "eslint --ext .ts *.ts lib/**/*.ts",
     "clean": "npm run clean:ts",
-    "clean:ts": "rimraf *.{js,d.ts} {src,lib}/**/*.{js,d.ts}",
+    "clean:ts": "rimraf index.{js,d.ts} lib/**/*.{js,d.ts}",
     "preversion": "npm run lint",
     "postversion": "git push && git push --tags",
     "prepublishOnly": "npm test && npm run build"
