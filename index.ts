@@ -1,3 +1,9 @@
+/**
+ * @packageDocumentation
+ * 
+ * Promise extensions and utility methods.
+ */
+
 export * from "./lib/_types";
 
 export { default as apply } from "./lib/apply";

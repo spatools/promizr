@@ -13,7 +13,9 @@ node_modules/
 
 # Dist
 !dist/**/*.*
+dist/tsdoc-metadata.json
 
 # Temp files
+temp/
 *.tmp
 *.log
