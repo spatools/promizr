@@ -16,6 +16,8 @@ export interface ProgressPromiseDeferred<T, P> {
 }
 
 /**
+ * @public
+ * 
  * A ProgressPromise is a special Promise which allows to track progress of the inner process.
  */
 export default class ProgressPromise<T, P> implements PromiseLike<T> {
@@ -40,7 +42,7 @@ export default class ProgressPromise<T, P> implements PromiseLike<T> {
      * Adds a progress callback who listen to progress evolution of the `ProgressPromise`.
      * 
      * @param onprogress - The callback to execute when the ProgressPromise progress changed.
-     * @return - This Promise
+     * @returns - This Promise
      */
     public progress(onprogress?: (progress: P) => void): this {
         if (typeof onprogress !== "function") return this;

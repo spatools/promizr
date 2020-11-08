@@ -3,6 +3,8 @@ import type { AsyncListIterator } from "./_types";
 import exec from "./exec";
 
 /**
+ * @public
+ * 
  * Applies the function `iterator` to each item in `arr`, in parallel.
  * The `iterator` is called with an item from the list, the index of this item and the list itself.
  * If the `iterator` emit a rejected Promise, the each function `Promise` result is instantly rejected.

@@ -4,6 +4,8 @@ import type { MethodNames, Func } from "./_internal";
 import execOn from "./execOn";
 
 /**
+ * @public
+ * 
  * Same as {@link apply} but call the `task` with `owner` `this` context.
  * If task is a string, it calls `owner[task]` function.
  * 
@@ -26,6 +28,8 @@ import execOn from "./execOn";
 export default function applyOn<O, K extends MethodNames<O>>(owner: O, task: K, ...args: Parameters<O[K]>): () => Async<ReturnType<O[K]>>;
 
 /**
+ * @public
+ * 
  * Same as {@link apply} but call the `task` with `owner` `this` context
  * 
  * @param owner - `this` context to use when calling `task`

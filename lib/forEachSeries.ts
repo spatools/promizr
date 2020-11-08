@@ -1,4 +1,7 @@
 import forEachSeries from "./eachSeries";
 
-/** @alias eachSeries */
+/**
+ * @public
+ * @alias eachSeries
+ */
 export default forEachSeries;

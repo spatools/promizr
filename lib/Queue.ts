@@ -15,6 +15,8 @@ type QueueItem<T, U> = {
 }
 
 /**
+ * @public
+ * 
  * A Queue runs a `worker` function on each item that it contains but limit the number of concurrent runs.
  */
 export default class Queue<T, U> {
@@ -50,9 +52,9 @@ export default class Queue<T, U> {
     /**
      * Creates a new Queue.
      * 
-     * @param worker The worker function to apply on each item in Queue
-     * @param limit The maximum number of concurrent workers to launch
-     * @param options The options for the Queue
+     * @param worker - The worker function to apply on each item in Queue
+     * @param limit - The maximum number of concurrent workers to launch
+     * @param options - The options for the Queue
      */
     constructor(worker: (arg: T) => U | Promise<U>, limit = 1, options?: QueueOptions) {
         this.worker = worker;

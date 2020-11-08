@@ -1,4 +1,7 @@
 import forEach from "./each";
 
-/** @alias each */
+/** 
+ * @public
+ * @alias each
+ */
 export default forEach;

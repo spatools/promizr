@@ -3,6 +3,8 @@ import type { AsyncListIterator } from "./_types";
 import exec from "./exec";
 
 /**
+ * @public
+ * 
  * Produces a new array of values by mapping each value in `array` through the `iterator` function.
  * The `iterator` is called with an item from the list, the index of this item and the list itself.
  * If the `iterator` emit a rejected Promise, the each function `Promise` result is instantly rejected.

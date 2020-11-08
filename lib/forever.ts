@@ -3,6 +3,8 @@ import type { AsyncTask } from "./_types";
 import exec from "./exec";
 
 /**
+ * @public
+ * 
  * Calls the `task` indefinitely.
  * Note: if `task` throws, the process stops.
  * 

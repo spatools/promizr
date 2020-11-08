@@ -3,6 +3,8 @@ import type { Async, AsyncFunction } from "./_types";
 import exec from "./exec";
 
 /**
+ * @public
+ * 
  * Utility function to log the result or the error of the given `task`.
  * If the `task` succeeds, its result is returned.
  * If the `task` failed, the error is thrown.

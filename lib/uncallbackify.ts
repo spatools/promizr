@@ -4,13 +4,18 @@ import type { FunctionWithMultiCallbacks, FunctionWithMultiCallbacksReturnType, 
 import type { Async } from "./_types";
 
 /**
+ * @public
+ * 
  * Same as {@link cbpromisify} but call the function immediately.
  * 
  * @param fn - The function to promisify
  * @param args - The arguments to pass to fn
  */
 export default function uncallbackify<T extends FunctionWithMultiCallbacks>(fn: T, ...args: ParametersWithoutLast2<T>): Async<FunctionWithMultiCallbacksReturnType<T>>;
+
 /**
+ * @public
+ * 
  * Same as {@link promisify} but call the function immediately.
  * 
  * @param owner - The `this` context to use when calling fn

@@ -6,9 +6,11 @@ import exec from "./exec";
 type HashFunction = (args: any[]) => string;
 
 /**
+ * @public
+ * 
  * Prepare a function that call the `task` and memoize the result to avoid calling it again.
  * If `hash` is `true`, memoize the result based on a hash of input arguments (default hash function: `JSON.stringify(args)`).
- * If `hash` is a function, memoize the result based on the hash returned by the function (signature: (args: any[]) => string).
+ * If `hash` is a function, memoize the result based on the hash returned by the function (signature: (args: any[]) =\> string).
  * 
  * Note: The `hash` function is synchronous.
  * 

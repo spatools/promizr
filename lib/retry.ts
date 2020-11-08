@@ -3,6 +3,8 @@ import type { AsyncTask } from "./_types";
 import exec from "./exec";
 
 /**
+ * @public
+ * 
  * Executes the `task` and retry if failed.
  * If `task` fails the given number of `times`, the promise is rejected.
  * 

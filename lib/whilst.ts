@@ -3,6 +3,8 @@ import type { AsyncTask } from "./_types";
 import exec from "./exec";
 
 /**
+ * @public
+ * 
  * Equivalent of `while` loop.
  * Calls the `task` function while the `test` function returns `true`.
  * 

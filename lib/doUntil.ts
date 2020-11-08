@@ -3,7 +3,9 @@ import type { AsyncTask } from "./_types";
 import exec from "./exec";
 
 /**
- * The opposite of {@link doWhilst}`.
+ * @public
+ * 
+ * The opposite of {@link doWhilst}.
  * Calls the `task` function until the `test` function returns `true`.
  * 
  * Note: `test` is called after the first task.

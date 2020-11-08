@@ -4,6 +4,8 @@ import type { GetFirst, GetLastReturnType } from "./_internal";
 import resolve from "./resolve";
 
 /**
+ * @public
+ * 
  * Prepare a new function that transfer its arguments to the fist `task` then calls each `task` using the result of the previous `task`.
  * Resolves with the result of the last `task`.
  * Note: Execution order if from start to end.

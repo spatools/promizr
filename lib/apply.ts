@@ -4,6 +4,8 @@ import type { Func } from "./_internal";
 import exec from "./exec";
 
 /**
+ * @public
+ * 
  * Create a new Task which exec `task` with given arguments.
  * 
  * @param action - The function to apply

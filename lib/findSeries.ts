@@ -3,6 +3,8 @@ import type { AsyncListIterator } from "./_types";
 import exec from "./exec";
 
 /**
+ * @public
+ * 
  * The same as {@link find}, only the `iterator` is applied to each item in `array` in series.
  * This means the result is always the first in the original `array` (in terms of array order) that passes the truth test.
  * 

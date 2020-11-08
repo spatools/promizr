@@ -4,6 +4,8 @@ import type { MethodNames } from "./_internal";
 import execOn from "./execOn";
 
 /**
+ * @public
+ * 
  * The sames as {@link tap} but apply the `task` with `owner` as this context.
  *  
  * @param owner - The this context to apply when calling the task
@@ -13,6 +15,8 @@ import execOn from "./execOn";
 export default function tapOn<O, K extends MethodNames<O>>(owner: O, task: K, ...args: Parameters<O[K]>): <U>(arg: U) => Promise<U>;
 
 /**
+ * @public
+ * 
  * The sames as {@link tap} but apply the `task` with `owner` as this context.
  *  
  * @param owner - The this context to apply when calling the task

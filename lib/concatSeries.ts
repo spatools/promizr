@@ -3,6 +3,8 @@ import type { AsyncListIterator } from "./_types";
 import mapSeries from "./mapSeries";
 
 /**
+ * @public
+ * 
  * Same as {@link concat}, but executes in series instead of parallel.
  * 
  * @param array - The array to iterate on

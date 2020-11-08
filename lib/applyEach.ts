@@ -3,6 +3,8 @@ import type { Async, AsyncFunction } from "./_types";
 import parallel from "./parallel";
 
 /**
+ * @public
+ * 
  * Prepare a new function which call all `tasks` in parallel with given arguments.
  * Returns an array with the result of all `tasks`.
  * 

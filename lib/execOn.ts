@@ -3,6 +3,8 @@ import type { Async, AsyncFunction } from "./_types";
 import resolve from "./resolve";
 
 /**
+ * @public
+ * 
  * Sames as {@link exec} but use `owner` as `this` context when calling `task`.
  *  
  * @param owner - The this context

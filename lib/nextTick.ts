@@ -1,6 +1,8 @@
 type NextTickCallback = () => void;
 
 /**
+ * @public
+ * 
  * Use the best next tick function depending on platform.
  * 
  * @param cb - The callback to call on next tick
