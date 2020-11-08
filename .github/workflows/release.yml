@@ -49,4 +49,4 @@ jobs:
         NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
       run: |
         npm i -g semantic-release@17 @semantic-release/git@9 @semantic-release/changelog@5
-        npx semantic-release@17
+        semantic-release
