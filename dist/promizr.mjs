@@ -216,12 +216,7 @@ function cbpromisify(owner, fn) {
             }
             function error(...errors) {
                 if (errors.length === 1) {
-                    errors = errors[0];
-                }
-                if (!(errors instanceof Error)) {
-                    const err = new Error(errors.toString());
-                    err.innerError = errors;
-                    return reject(errors);
+                    return reject(errors[0]);
                 }
                 reject(errors);
             }
@@ -510,6 +505,7 @@ class QueueError extends Error {
     }
 }
 
+/* istanbul ignore file */
 /**
  * @public
  *
@@ -1083,6 +1079,9 @@ class PriorityQueue extends Queue {
         super(worker, limit, options);
         this.defaultPriority = 1;
         this.items = [];
+        if (typeof (options === null || options === void 0 ? void 0 : options.defaultPriority) !== "undefined") {
+            this.defaultPriority = options.defaultPriority;
+        }
     }
     push(...datas) {
         let priority = this.defaultPriority;
@@ -1096,7 +1095,7 @@ class PriorityQueue extends Queue {
     }
     unshift(...datas) {
         let priority = this.defaultPriority;
-        if (typeof datas[0] === "number") {
+        if (typeof datas[0] === "number" && datas.length > 1) {
             priority = datas.shift();
         }
         if (datas.length === 1 && Array.isArray(datas[0])) {

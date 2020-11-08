@@ -539,7 +539,7 @@ export declare function memoize<T extends AsyncFunction>(task: T, hash?: boolean
 
 /** Utility type to extract keys from object where value is a function. */
 declare type MethodNames<T> = {
-    [K in keyof T]: T[K] extends (...args: unknown[]) => unknown ? K : never;
+    [K in keyof T]: T[K] extends (...args: any[]) => any ? K : never;
 }[keyof T];
 
 /**
