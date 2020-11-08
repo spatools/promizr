@@ -1,8 +1,6 @@
 import PriorityQueue from "../lib/PriorityQueue";
 import QueueError from "../lib/QueueError";
 
-import immediate from "../lib/immediate";
-
 import timeout from "./helpers/timeout";
 import createDeferreds from "./helpers/createDeferreds";
 
@@ -16,26 +14,21 @@ describe("promizr.PriorityQueue", () => {
 
         test("should not start queue if no list provided", async () => {
             const spy = jest.fn();
-            const instance = new PriorityQueue(spy, LIMIT);
+            const instance = new PriorityQueue(spy);
 
             await timeout(10);
             expect(spy).not.toHaveBeenCalled();
         });
 
-        // test("should start queue if list provided", async () => {
-        //     const spy = jest.fn();
-        //     const instance = new PriorityQueue(spy, limit, list);
+        test("should assign options to instance", async () => {
+            const instance = new PriorityQueue(i => i, LIMIT, {
+                waitToReject: true,
+                defaultPriority: 5
+            });
 
-        //     await timeout(20);
-        //         sinon.assert.callCount(spy, list.length);
-        // });
-
-        // test("should start queue asynchronously", () => {
-        //     const spy = jest.fn();
-        //     const instance = new PriorityQueue(spy, limit, list);
-
-        //     expect(spy).not.toHaveBeenCalled();
-        // });
+            expect(instance).toHaveProperty("waitToReject", true);
+            expect(instance).toHaveProperty("defaultPriority", 5);
+        });
 
     });
 
@@ -52,6 +45,15 @@ describe("promizr.PriorityQueue", () => {
                 .resolves.toEqual(expect.any(Array));
 
             expect(spy).toHaveBeenCalledTimes(TOTAL);
+        });
+
+        test("should resolves instantly if no items are passed", async () => {
+            const spy = jest.fn(() => timeout(10));
+            const instance = new PriorityQueue(spy, LIMIT);
+
+            await instance.push();
+
+            expect(spy).toHaveBeenCalledTimes(0);
         });
 
         test("should resolve with an array containing results of each workers", async () => {
@@ -72,7 +74,7 @@ describe("promizr.PriorityQueue", () => {
 
         test("should reject immediately if any item reject", async () => {
             const spy = jest.fn(n => Promise.reject(n));
-            const instance = new PriorityQueue(n => immediate().then(() => spy(n)), LIMIT);
+            const instance = new PriorityQueue((n: number) => timeout(n * 10).then(() => spy(n)), LIMIT);
 
             await expect(instance.push(LIST))
                 .rejects.toBe(LIST[0]);
@@ -82,7 +84,7 @@ describe("promizr.PriorityQueue", () => {
 
         test("should wait to reject QueueError if waitToReject is set to true", async () => {
             const spy = jest.fn(n => n % 2 === 0 ? Promise.reject(n) : Promise.resolve(n));
-            const instance = new PriorityQueue(n => immediate().then(() => spy(n)), LIMIT, { waitToReject: true });
+            const instance = new PriorityQueue((n: number) => timeout(n).then(() => spy(n)), LIMIT, { waitToReject: true });
 
             await expect(instance.push(LIST))
                 .rejects.toBeInstanceOf(QueueError);
@@ -92,6 +94,106 @@ describe("promizr.PriorityQueue", () => {
 
             await expect(instance.push(LIST))
                 .rejects.toHaveProperty("results", LIST.filter(n => n % 2 === 1));
+        });
+
+        test("should call onsaturated if there are more items than limit", () => {
+            const spy = jest.fn();
+            const instance = new PriorityQueue(n => n, LIMIT, { onsaturated: spy });
+
+            instance.push(LIST.slice(0, 2));
+
+            expect(spy).not.toHaveBeenCalled();
+
+            instance.push(LIST.slice(3));
+
+            expect(spy).toHaveBeenCalledTimes(1);
+
+            instance.push(LIST);
+
+            expect(spy).toHaveBeenCalledTimes(2);
+        });
+
+    });
+
+    describe(".unshift()", () => {
+
+        test("returns a Promise which resolves when all tasks are done", async () => {
+            const spy = jest.fn(() => timeout(10));
+            const instance = new PriorityQueue(spy, LIMIT);
+
+            const promise = instance.unshift(LIST);
+            expect(promise).toEqual(expect.any(Promise));
+
+            await expect(promise)
+                .resolves.toEqual(expect.any(Array));
+
+            expect(spy).toHaveBeenCalledTimes(TOTAL);
+        });
+
+        test("should resolves instantly if no items are passed", async () => {
+            const spy = jest.fn(() => timeout(10));
+            const instance = new PriorityQueue(spy, LIMIT);
+
+            await instance.unshift();
+
+            expect(spy).toHaveBeenCalledTimes(0);
+        });
+
+        test("should resolve with an array containing results of each workers", async () => {
+            const instance = new PriorityQueue(i => i, LIMIT);
+
+            const res = await instance.unshift(LIST);
+
+            expect(res).toEqual(LIST);
+            expect(res).not.toBe(LIST);
+        });
+
+        test("should resolve with only one item if only one item is passed to unshifted function", async () => {
+            const instance = new PriorityQueue(i => i, LIMIT);
+
+            const res = await instance.unshift(LIST[0]);
+            expect(res).toBe(LIST[0]);
+        });
+
+        test("should reject immediately if any item reject", async () => {
+            const spy = jest.fn(n => Promise.reject(n));
+            const instance = new PriorityQueue((n: number) => timeout(n * 10).then(() => spy(n)), LIMIT);
+
+            await expect(instance.unshift(LIST))
+                .rejects.toBe(LIST[0]);
+
+            expect(spy).toHaveBeenCalledTimes(1);
+        });
+
+        test("should wait to reject QueueError if waitToReject is set to true", async () => {
+            const spy = jest.fn(n => n % 2 === 0 ? Promise.reject(n) : Promise.resolve(n));
+            const instance = new PriorityQueue((n: number) => timeout(n).then(() => spy(n)), LIMIT, { waitToReject: true });
+
+            await expect(instance.unshift(LIST))
+                .rejects.toBeInstanceOf(QueueError);
+
+            await expect(instance.unshift(LIST))
+                .rejects.toHaveProperty("innerErrors", LIST.filter(n => n % 2 === 0));
+
+            await expect(instance.unshift(LIST))
+                .rejects.toHaveProperty("results", LIST.filter(n => n % 2 === 1));
+        });
+
+        test("should call onsaturated if there are more items than limit", () => {
+            const spy = jest.fn();
+            const instance = new PriorityQueue(n => n, LIMIT, { onsaturated: spy });
+
+            instance.unshift(1, LIST.slice(0, 2));
+
+            expect(spy).not.toHaveBeenCalled();
+
+            instance.unshift(LIST.slice(3));
+
+            expect(spy).toHaveBeenCalledTimes(1);
+
+            instance.unshift(LIST);
+
+            expect(spy).toHaveBeenCalledTimes(2);
         });
 
     });
@@ -186,6 +288,32 @@ describe("promizr.PriorityQueue", () => {
             expect(spy).toHaveBeenCalledTimes(LIMIT);
         });
 
+        test("should call onempty when queue has no more items", async () => {
+            const spy = jest.fn();
+            const instance = new PriorityQueue(n => n, LIMIT, { onempty: spy });
+
+            const promise = instance.push(LIST);
+
+            expect(spy).not.toHaveBeenCalled();
+
+            await promise;
+
+            expect(spy).toHaveBeenCalledTimes(1);
+        });
+
+        test("should call onempty when queue has no more items nor workers", async () => {
+            const spy = jest.fn();
+            const instance = new PriorityQueue(n => n, LIMIT, { ondrain: spy });
+
+            const promise = instance.push(LIST);
+
+            expect(spy).not.toHaveBeenCalled();
+
+            await promise;
+
+            expect(spy).toHaveBeenCalledTimes(1);
+        });
+
         describe("with priority", () => {
 
             test("call tasks in priority order", async () => {
@@ -204,7 +332,7 @@ describe("promizr.PriorityQueue", () => {
                     expect(secondSpy).toHaveBeenCalled();
                 });
 
-                const instance = new PriorityQueue(immediate, LIMIT);
+                const instance = new PriorityQueue(timeout, LIMIT);
 
                 await Promise.all([
                     instance.push(5, LIST).then(thirdSpy),

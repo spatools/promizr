@@ -82,6 +82,11 @@ describe("promizr.ProgressPromise", () => {
             expect(spy2).toHaveBeenCalledWith(0.5);
         });
 
+        test("should throw TypeError if not called with new", () => {
+            expect(() => (ProgressPromise as any)((r: (value?: unknown) => void) => r()))
+                .toThrow(TypeError);
+        });
+
     });
 
     describe(".progress()", () => {
@@ -184,6 +189,52 @@ describe("promizr.ProgressPromise", () => {
             promise.progress(spy1);
 
             expect(spy1).toHaveBeenCalledTimes(1);
+        });
+
+    });
+
+    describe(".finally()", () => {
+
+        test("should call onfinally if ProgressPromise resolves", async () => {
+            const spy = jest.fn();
+            let resolve: (value?: unknown) => void = () => void 0;
+            const promise = new ProgressPromise(r => { resolve = r; }).finally(spy);
+
+            resolve("result");
+
+            await expect(promise)
+                .resolves.toBe("result");
+
+            expect(spy).toHaveBeenCalledTimes(1);
+            expect(spy).toHaveBeenCalledWith();
+        });
+
+        test("should call onfinally if ProgressPromise rejects", async () => {
+            const spy = jest.fn();
+            let reject: (reason?: unknown) => void = () => void 0;
+            const promise = new ProgressPromise((r, re) => { reject = re; }).finally(spy);
+
+            const err = new Error("test");
+            reject(err);
+
+            await expect(promise)
+                .rejects.toBe(err);
+
+            expect(spy).toHaveBeenCalledTimes(1);
+            expect(spy).toHaveBeenCalledWith();
+        });
+
+        test("should returns a new Promise if no onfinally is passed", async () => {
+            let resolve: (value?: unknown) => void = () => void 0;
+            const promise = new ProgressPromise(r => { resolve = r; });
+            const finallized = promise.finally();
+
+            expect(promise).not.toBe(finallized);
+
+            resolve("result");
+
+            await expect(finallized)
+                .resolves.toBe("result");
         });
 
     });

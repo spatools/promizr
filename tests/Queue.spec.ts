@@ -1,8 +1,6 @@
 import Queue from "../lib/Queue";
 import QueueError from "../lib/QueueError";
 
-import immediate from "../lib/immediate";
-
 import timeout from "./helpers/timeout";
 import createDeferreds from "./helpers/createDeferreds";
 
@@ -17,7 +15,7 @@ describe("promizr.Queue", () => {
         test("should not start queue if no list provided", async () => {
             const spy = jest.fn();
 
-            new Queue(spy, LIMIT);
+            new Queue(spy);
 
             await timeout(10);
 
@@ -51,6 +49,15 @@ describe("promizr.Queue", () => {
             expect(spy).toHaveBeenCalledTimes(TOTAL);
         });
 
+        test("should resolves instantly if no items are passed", async () => {
+            const spy = jest.fn(() => timeout(10));
+            const instance = new Queue(spy, LIMIT);
+
+            await instance.push();
+
+            expect(spy).toHaveBeenCalledTimes(0);
+        });
+
         test("should resolve with an array containing results of each workers", async () => {
             const instance = new Queue(i => i, LIMIT);
 
@@ -69,7 +76,7 @@ describe("promizr.Queue", () => {
 
         test("should reject immediately if any item reject", async () => {
             const spy = jest.fn(n => Promise.reject(n));
-            const instance = new Queue(n => immediate().then(() => spy(n)), LIMIT);
+            const instance = new Queue((n: number) => timeout(n * 10).then(() => spy(n)), LIMIT);
 
             await expect(instance.push(LIST))
                 .rejects.toBe(LIST[0]);
@@ -79,7 +86,7 @@ describe("promizr.Queue", () => {
 
         test("should wait to reject QueueError if waitToReject is set to true", async () => {
             const spy = jest.fn(n => n % 2 === 0 ? Promise.reject(n) : Promise.resolve(n));
-            const instance = new Queue(n => immediate().then(() => spy(n)), LIMIT, { waitToReject: true });
+            const instance = new Queue((n: number) => timeout(n).then(() => spy(n)), LIMIT, { waitToReject: true });
 
             await expect(instance.push(LIST))
                 .rejects.toBeInstanceOf(QueueError);
@@ -89,6 +96,23 @@ describe("promizr.Queue", () => {
 
             await expect(instance.push(LIST))
                 .rejects.toHaveProperty("results", LIST.filter(n => n % 2 === 1));
+        });
+
+        test("should call onsaturated if there are more items than limit", () => {
+            const spy = jest.fn();
+            const instance = new Queue(n => n, LIMIT, { onsaturated: spy });
+
+            instance.push(LIST.slice(0, 2));
+
+            expect(spy).not.toHaveBeenCalled();
+
+            instance.push(LIST.slice(3));
+
+            expect(spy).toHaveBeenCalledTimes(1);
+
+            instance.push(LIST);
+
+            expect(spy).toHaveBeenCalledTimes(2);
         });
 
     });
@@ -432,6 +456,32 @@ describe("promizr.Queue", () => {
                 .rejects.toBe(err);
 
             expect(spy).toHaveBeenCalledTimes(LIMIT);
+        });
+
+        test("should call onempty when queue has no more items", async () => {
+            const spy = jest.fn();
+            const instance = new Queue(n => n, LIMIT, { onempty: spy });
+
+            const promise = instance.push(LIST);
+
+            expect(spy).not.toHaveBeenCalled();
+
+            await promise;
+
+            expect(spy).toHaveBeenCalledTimes(1);
+        });
+
+        test("should call onempty when queue has no more items nor workers", async () => {
+            const spy = jest.fn();
+            const instance = new Queue(n => n, LIMIT, { ondrain: spy });
+
+            const promise = instance.push(LIST);
+
+            expect(spy).not.toHaveBeenCalled();
+
+            await promise;
+
+            expect(spy).toHaveBeenCalledTimes(1);
         });
 
     });

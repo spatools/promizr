@@ -94,6 +94,15 @@ describe("promizr.promisify()", () => {
         });
     });
 
+    describe("with no function", () => {
+
+        test("should throw with a TypeError", () => {
+            expect(() => (promisify as any)())
+                .toThrow(TypeError);
+        });
+
+    });
+
 });
 
 function nodeStyleFunction(res: string | undefined, multi: boolean | null | undefined, throws: Error | null | undefined, cb: (err?: Error | null, ...args: any[]) => void): void {

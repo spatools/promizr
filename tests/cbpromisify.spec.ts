@@ -92,12 +92,33 @@ describe("promizr.cbpromisify()", () => {
             await expect(cbpromisify(owner, thisMultiCallbackFunction)("result", false, err))
                 .rejects.toBe(err);
         });
+
+        test("should throw with array if the callback function returns multiple errors", async () => {
+            const err = new Error("test");
+
+            await expect(cbpromisify(owner, thisMultiCallbackFunction)("result", true, err))
+                .rejects.toEqual([err, err]);
+        });
+    });
+
+    describe("with no function", () => {
+
+        test("should throw with a TypeError", () => {
+            expect(() => (cbpromisify as any)())
+                .toThrow(TypeError);
+        });
+
     });
 
 });
 
-function multiCallbackFunction(res: string | undefined, multi: boolean | null | undefined, throws: Error | null | undefined, successCallback: (...args: any[]) => void, errorCallback: (err: Error) => void): void {
+function multiCallbackFunction(res: string | undefined, multi: boolean | null | undefined, throws: Error | null | undefined, successCallback: (...args: any[]) => void, errorCallback: (...err: Error[]) => void): void {
     if (throws) {
+        if (multi) {
+            setImmediate(() => errorCallback(throws, throws));
+            return;
+        }
+
         setImmediate(() => errorCallback(throws));
         return;
     }
