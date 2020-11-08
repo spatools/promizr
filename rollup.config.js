@@ -1,5 +1,5 @@
 import typescript from "@rollup/plugin-typescript";
-import dts from "rollup-plugin-dts";
+// import dts from "rollup-plugin-dts";
 import cleanup from "rollup-plugin-cleanup";
 import { terser } from "rollup-plugin-terser";
 
@@ -44,7 +44,7 @@ export default [{
         typescript({ target: "es6" }),
         cleanup({ comments: "jsdoc", maxEmptyLines: 1 })
     ]
-}, {
+}, /*{
     input: "index.ts",
     external,
     external,
@@ -58,4 +58,4 @@ export default [{
         dts(),
         cleanup({ comments: "jsdoc", maxEmptyLines: 1 })
     ]
-}];
+}*/];
