@@ -1,6 +1,6 @@
 {
   "name": "promizr",
-  "version": "1.0.0-beta.1",
+  "version": "1.0.0",
   "description": "ES6 Promise Extensions and utility methods + Polyfill which strictly follows ES6 specification",
   "author": "Touchify <dev@touchify.co>",
   "main": "dist/promizr.js",
