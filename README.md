@@ -1,9 +1,9 @@
 ﻿# promizr
 
-[![Build Status](https://travis-ci.org/spatools/promizr.png)](https://travis-ci.org/spatools/promizr)
-[![Bower version](https://badge.fury.io/bo/promizr.png)](http://badge.fury.io/bo/promizr)
-[![NuGet version](https://badge.fury.io/nu/Promizr.png)](http://badge.fury.io/nu/Promizr)
+[![Unit Tests](https://github.com/spatools/promizr/workflows/Unit%20Tests/badge.svg)](https://github.com/spatools/promizr/actions?query=workflow%3A%22Unit+Tests%22)
+[![Coverage Status](https://coveralls.io/repos/github/spatools/promizr/badge.svg?branch=%40release/v1)](https://coveralls.io/github/spatools/promizr?branch=%40release/v1)
 [![NPM version](https://badge.fury.io/js/promizr.png)](http://badge.fury.io/js/promizr)
+
 
 Promise extensions and utility methods (Timeout, Filtering, Mapping, Queue, etc.).
 
@@ -13,12 +13,6 @@ Using NPM:
 
 ```console
 $ npm install promizr
-```
-
-Using NuGet:
-
-```console
-$ Install-Package Promizr
 ```
 
 ## Usage
