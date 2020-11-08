@@ -38,6 +38,11 @@ jobs:
       env:
         CI: true
 
+    - name: Collect coverage
+      uses: coverallsapp/github-action@master
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+
     - name: Build release
       run: npx semantic-release@17 --dry-run
       env:
