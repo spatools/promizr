@@ -25,9 +25,3 @@ jobs:
       run: npm run test:ci
       env:
         CI: true
-
-    - name: Collect coverage
-      uses: coverallsapp/github-action@master
-      if: matrix.node-version == '12.x'
-      with:
-        github-token: ${{ secrets.GITHUB_TOKEN }}
