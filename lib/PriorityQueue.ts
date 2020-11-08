@@ -5,6 +5,9 @@ import defer from "./defer";
 
 type PriorityQueueItem<T, P> = Queue<T, P>["items"][number] & { priority?: number; };
 
+/**
+ * A PriorityQueue is like a {@link Queue} but executes items in priority order.
+ */
 export default class PriorityQueue<T, U> extends Queue<T, U> {
     public defaultPriority = 1;
 

@@ -15,6 +15,9 @@ export interface ProgressPromiseDeferred<T, P> {
     promise: ProgressPromise<T, P>;
 }
 
+/**
+ * A ProgressPromise is a special Promise which allows to track progress of the inner process.
+ */
 export default class ProgressPromise<T, P> implements PromiseLike<T> {
     protected _innerPromise: Promise<T>;
     protected _progress: P | undefined = undefined;

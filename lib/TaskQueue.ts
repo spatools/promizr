@@ -2,6 +2,9 @@ import type { AsyncTask, QueueOptions } from "./_types";
 
 import Queue from "./Queue";
 
+/**
+ * The same as {@link Queue} but items are the tasks to execute.
+ */
 export default class TaskQueue<T> extends Queue<AsyncTask<T>, T> {
 
     /**

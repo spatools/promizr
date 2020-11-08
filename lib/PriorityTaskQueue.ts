@@ -2,6 +2,9 @@ import type { AsyncTask, PriorityQueueOptions } from "./_types";
 
 import PriorityQueue from "./PriorityQueue";
 
+/**
+ * The same as {@link PriorityQueue} but items are the tasks to execute.
+ */
 export default class PriorityTaskQueue<T> extends PriorityQueue<AsyncTask<T>, T> {
 
     /**
