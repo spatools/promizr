@@ -24,6 +24,10 @@ export default class PriorityQueue<T, U> extends Queue<T, U> {
      */
     constructor(worker: (arg: T) => U | Promise<U>, limit?: number, options?: PriorityQueueOptions) {
         super(worker, limit, options);
+
+        if (typeof options?.defaultPriority !== "undefined") {
+            this.defaultPriority = options.defaultPriority;
+        }
     }
 
     public push(priority: number, data?: T): Promise<U>;
@@ -53,7 +57,7 @@ export default class PriorityQueue<T, U> extends Queue<T, U> {
     public unshift(...datas: T[]): Promise<U[]>;
     public unshift(...datas: any[]): Promise<U | U[]> {
         let priority = this.defaultPriority;
-        if (typeof datas[0] === "number") {
+        if (typeof datas[0] === "number" && datas.length > 1) {
             priority = datas.shift();
         }
 

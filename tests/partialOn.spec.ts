@@ -1,79 +1,167 @@
 import partialOn from "../lib/partialOn";
 
 describe("promizr.partialOn()", () => {
-    const owner = {};
 
-    test("should create a function which combine task with given arguments", async () => {
-        const spy = jest.fn((arg: string, test: boolean, arg2: string, count: number) => `${arg}-${test}-${arg2}-${count}`);
-        const fn = partialOn(owner, spy, "arg", true);
+    describe("with a string", () => {
 
-        expect(spy).not.toHaveBeenCalled();
+        test("should create a function which combine task with given arguments", async () => {
+            const spy = jest.fn((arg: string, test: boolean, arg2: string, count: number) => `${arg}-${test}-${arg2}-${count}`);
 
-        await fn("arg2", 2);
+            const owner = { test: spy };
+            const fn = partialOn(owner, "test", "arg", true);
 
-        expect(spy).toHaveBeenCalledTimes(1);
-        expect(spy).toHaveBeenCalledWith("arg", true, "arg2", 2);
-    });
+            expect(spy).not.toHaveBeenCalled();
 
-    test("should use owner as this context when calling task", async () => {
-        const spy = jest.fn(function (this: unknown, arg: string, test: boolean, arg2: string, count: number): string {
-            expect(this).toBe(owner);
-            return `${arg}-${test}-${arg2}-${count}`;
+            await fn("arg2", 2);
+
+            expect(spy).toHaveBeenCalledTimes(1);
+            expect(spy).toHaveBeenCalledWith("arg", true, "arg2", 2);
         });
 
-        await partialOn(owner, spy, "arg", true)("arg2", 2);
+        test("should use owner as this context when calling task", async () => {
+            const spy = jest.fn(function (this: unknown, arg: string, test: boolean, arg2: string, count: number): string {
+                expect(this).toBe(owner);
+                return `${arg}-${test}-${arg2}-${count}`;
+            });
 
-        expect(spy).toHaveBeenCalledTimes(1);
+            const owner = { test: spy };
+            await partialOn(owner, "test", "arg", true)("arg2", 2);
+
+            expect(spy).toHaveBeenCalledTimes(1);
+        });
+
+        test("should resolve with the task result if sync", async () => {
+            const spy = jest.fn((arg: string, test: boolean, arg2: string, count: number) => `${arg}-${test}-${arg2}-${count}`);
+
+            const owner = { test: spy };
+            const promise = partialOn(owner, "test", "arg", true)("arg2", 2);
+
+            expect(spy).toHaveBeenCalledTimes(1);
+            expect(promise).toEqual(expect.any(Promise));
+
+            await expect(promise)
+                .resolves.toBe("arg-true-arg2-2");
+        });
+
+        test("should resolve with the task resolution if async", async () => {
+            const spy = jest.fn(async (arg: string, test: boolean, arg2: string, count: number) => `${arg}-${test}-${arg2}-${count}`);
+
+            const owner = { test: spy };
+            const promise = partialOn(owner, "test", "arg", true)("arg2", 2);
+
+            expect(spy).toHaveBeenCalledTimes(1);
+            expect(promise).toEqual(expect.any(Promise));
+
+            await expect(promise)
+                .resolves.toBe("arg-true-arg2-2");
+        });
+
+        test("should reject Promise if task throws", async () => {
+            const err = new Error("test");
+            const spy = jest.fn(() => { throw err; });
+
+            const owner = { test: spy };
+            const promise = partialOn(owner, "test")();
+
+            expect(spy).toHaveBeenCalledTimes(1);
+            expect(promise).toEqual(expect.any(Promise));
+
+            await expect(promise)
+                .rejects.toBe(err);
+        });
+
+        test("should reject Promise if task rejects", async () => {
+            const err = new Error("test");
+            const spy = jest.fn(async () => { throw err; });
+
+            const owner = { test: spy };
+            const promise = partialOn(owner, "test")();
+
+            expect(spy).toHaveBeenCalledTimes(1);
+            expect(promise).toEqual(expect.any(Promise));
+
+            await expect(promise)
+                .rejects.toBe(err);
+        });
+
     });
 
-    test("should resolve with the task result if sync", async () => {
-        const spy = jest.fn((arg: string, test: boolean, arg2: string, count: number) => `${arg}-${test}-${arg2}-${count}`);
+    describe("with a function", () => {
+        const owner = {};
 
-        const promise = partialOn(owner, spy, "arg", true)("arg2", 2);
+        test("should create a function which combine task with given arguments", async () => {
+            const spy = jest.fn((arg: string, test: boolean, arg2: string, count: number) => `${arg}-${test}-${arg2}-${count}`);
+            const fn = partialOn(owner, spy, "arg", true);
 
-        expect(spy).toHaveBeenCalledTimes(1);
-        expect(promise).toEqual(expect.any(Promise));
+            expect(spy).not.toHaveBeenCalled();
 
-        await expect(promise)
-            .resolves.toBe("arg-true-arg2-2");
-    });
+            await fn("arg2", 2);
 
-    test("should resolve with the task resolution if async", async () => {
-        const spy = jest.fn(async (arg: string, test: boolean, arg2: string, count: number) => `${arg}-${test}-${arg2}-${count}`);
+            expect(spy).toHaveBeenCalledTimes(1);
+            expect(spy).toHaveBeenCalledWith("arg", true, "arg2", 2);
+        });
 
-        const promise = partialOn(owner, spy, "arg", true)("arg2", 2);
+        test("should use owner as this context when calling task", async () => {
+            const spy = jest.fn(function (this: unknown, arg: string, test: boolean, arg2: string, count: number): string {
+                expect(this).toBe(owner);
+                return `${arg}-${test}-${arg2}-${count}`;
+            });
 
-        expect(spy).toHaveBeenCalledTimes(1);
-        expect(promise).toEqual(expect.any(Promise));
+            await partialOn(owner, spy, "arg", true)("arg2", 2);
 
-        await expect(promise)
-            .resolves.toBe("arg-true-arg2-2");
-    });
+            expect(spy).toHaveBeenCalledTimes(1);
+        });
 
-    test("should reject Promise if task throws", async () => {
-        const err = new Error("test");
-        const spy = jest.fn(() => { throw err; });
+        test("should resolve with the task result if sync", async () => {
+            const spy = jest.fn((arg: string, test: boolean, arg2: string, count: number) => `${arg}-${test}-${arg2}-${count}`);
 
-        const promise = partialOn(owner, spy)();
+            const promise = partialOn(owner, spy, "arg", true)("arg2", 2);
 
-        expect(spy).toHaveBeenCalledTimes(1);
-        expect(promise).toEqual(expect.any(Promise));
+            expect(spy).toHaveBeenCalledTimes(1);
+            expect(promise).toEqual(expect.any(Promise));
 
-        await expect(promise)
-            .rejects.toBe(err);
-    });
+            await expect(promise)
+                .resolves.toBe("arg-true-arg2-2");
+        });
 
-    test("should reject Promise if task rejects", async () => {
-        const err = new Error("test");
-        const spy = jest.fn(async () => { throw err; });
+        test("should resolve with the task resolution if async", async () => {
+            const spy = jest.fn(async (arg: string, test: boolean, arg2: string, count: number) => `${arg}-${test}-${arg2}-${count}`);
 
-        const promise = partialOn(owner, spy)();
+            const promise = partialOn(owner, spy, "arg", true)("arg2", 2);
 
-        expect(spy).toHaveBeenCalledTimes(1);
-        expect(promise).toEqual(expect.any(Promise));
+            expect(spy).toHaveBeenCalledTimes(1);
+            expect(promise).toEqual(expect.any(Promise));
 
-        await expect(promise)
-            .rejects.toBe(err);
+            await expect(promise)
+                .resolves.toBe("arg-true-arg2-2");
+        });
+
+        test("should reject Promise if task throws", async () => {
+            const err = new Error("test");
+            const spy = jest.fn(() => { throw err; });
+
+            const promise = partialOn(owner, spy)();
+
+            expect(spy).toHaveBeenCalledTimes(1);
+            expect(promise).toEqual(expect.any(Promise));
+
+            await expect(promise)
+                .rejects.toBe(err);
+        });
+
+        test("should reject Promise if task rejects", async () => {
+            const err = new Error("test");
+            const spy = jest.fn(async () => { throw err; });
+
+            const promise = partialOn(owner, spy)();
+
+            expect(spy).toHaveBeenCalledTimes(1);
+            expect(promise).toEqual(expect.any(Promise));
+
+            await expect(promise)
+                .rejects.toBe(err);
+        });
+
     });
 
 });

@@ -33,7 +33,7 @@ describe("promizr.eachLimit()", () => {
         const err = new Error("test");
         const spy = jest.fn(() => { throw err; });
 
-        await expect(eachLimit(LIST, LIMIT, () => timeout(1).then(spy)))
+        await expect(eachLimit(LIST, LIMIT, (n) => timeout(n).then(spy)))
             .rejects.toBe(err);
 
         expect(spy).toHaveBeenCalledTimes(1);

@@ -16,8 +16,8 @@ export default class QueueError<T> extends Error {
             Object.setPrototypeOf(this, QueueError.prototype);
         }
 
-        if ((<any>Error).captureStackTrace) {
-            (<any>Error).captureStackTrace(this, this.constructor);
+        if (Error.captureStackTrace) {
+            Error.captureStackTrace(this, this.constructor);
         }
 
         this.innerErrors = innerErrors;

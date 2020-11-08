@@ -22,7 +22,7 @@ export type PreviousIndex<T extends number> = [-1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9,
 
 /** Utility type to extract keys from object where value is a function. */
 export type MethodNames<T> = {
-    [K in keyof T]: T[K] extends (...args: unknown[]) => unknown ? K : never;
+    [K in keyof T]: T[K] extends (...args: any[]) => any ? K : never;
 }[keyof T];
 
 export type Func = (...args: any[]) => any;

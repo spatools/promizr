@@ -41,7 +41,7 @@
     "lint": "npm run lint:ts",
     "lint:ts": "eslint --ext .ts *.ts lib/**/*.ts",
     "clean": "npm run clean:ts",
-    "clean:ts": "rimraf index.{js,d.ts} lib/**/*.{js,d.ts} temp",
+    "clean:ts": "rimraf index.{js,d.ts} lib/**/*.{js,d.ts} temp coverage",
     "clean:dist": "rimraf dist",
     "preversion": "npm run lint",
     "postversion": "git push && git push --tags",
