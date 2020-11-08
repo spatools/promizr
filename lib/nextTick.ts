@@ -2,6 +2,7 @@ type NextTickCallback = () => void;
 
 /**
  * Use the best next tick function depending on platform.
+ * 
  * @param cb - The callback to call on next tick
  */
 const nextTick = (function (self: any): (cb: NextTickCallback) => void {

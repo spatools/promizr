@@ -7,6 +7,8 @@ import resolve from "./resolve";
  * Prepare a new function that transfer its arguments to the fist `task` then calls each `task` using the result of the previous `task`.
  * Resolves with the result of the last `task`.
  * Note: Execution order if from start to end.
+ * 
+ * @param tasks - Functions to be run from start to end
  */
 export default function seq<T extends AsyncFunction[]>(...tasks: T): (...args: Parameters<GetFirst<T>>) => Async<GetLastReturnType<T>> {
     return function (this: unknown, ...args: unknown[]): Async<GetLastReturnType<T>> {

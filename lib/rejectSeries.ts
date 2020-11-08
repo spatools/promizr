@@ -4,7 +4,10 @@ import resolve from "./resolve";
 import eachSeries from "./eachSeries";
 
 /**
- * The same as `reject`, only the `iterator` is applied to each item in `array` in series.
+ * The same as {@link reject}, only the `iterator` is applied to each item in `array` in series.
+ * 
+ * @param array - The array to iterate on
+ * @param iterator - The iterator which test each item
  */
 export default function rejectSeries<T>(array: T[], iterator: AsyncListIterator<T, boolean>): Promise<T[]> {
     const results: T[] = [];

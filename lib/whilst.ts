@@ -5,6 +5,9 @@ import exec from "./exec";
 /**
  * Equivalent of `while` loop.
  * Calls the `task` function while the `test` function returns `true`.
+ * 
+ * @param test - The function that test if the process should continue
+ * @param task - The task to execute while `test` pass
  */
 export default function whilst<T>(test: AsyncTask<boolean>, task: AsyncTask<T>): Promise<void> {
     return next();

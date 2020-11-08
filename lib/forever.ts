@@ -5,6 +5,8 @@ import exec from "./exec";
 /**
  * Calls the `task` indefinitely.
  * Note: if `task` throws, the process stops.
+ * 
+ * @param task - The task to execute until it fails
  */
 export default function forever<T>(task: AsyncTask<T>): Promise<never> {
     return next();

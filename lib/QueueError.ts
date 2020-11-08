@@ -1,3 +1,6 @@
+/**
+ * An Error that is thrown when a Queue execution fails and `waitToReject` option is set to true.
+ */
 export default class QueueError<T> extends Error {
     public innerErrors: Error[];
     public results: T[];

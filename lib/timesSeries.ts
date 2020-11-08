@@ -3,8 +3,11 @@ import type { AsyncTask } from "./_types";
 import resolve from "./resolve";
 
 /**
- * The same as `times`, only `tasks` are applied in series.
+ * The same as {@link times}, only `tasks` are applied in series.
  * The next `task` is only called once the current one has completed.
+ * 
+ * @param times - The number of times `task` should be called
+ * @param task - The task to run multiple times
  */
 export default function timesSeries<T>(times: number, task: AsyncTask<T>): Promise<T[]> {
     const results: T[] = [];

@@ -14,6 +14,9 @@ type QueueItem<T, U> = {
     rejecter(err: Error): void;
 }
 
+/**
+ * A Queue runs a `worker` function on each item that it contains but limit the number of concurrent runs.
+ */
 export default class Queue<T, U> {
     protected items: Array<QueueItem<T, U>> = [];
     protected worker: (arg: T) => U | Promise<U>;

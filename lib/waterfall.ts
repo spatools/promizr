@@ -7,6 +7,8 @@ import resolve from "./resolve";
  * Calls each `task` using the result of the previous `task`.
  * Resolves with the result of the last `task`.
  * The first `task` should not take any argument. 
+ * 
+ * @param tasks - Functions to run in order
  */
 export default function waterfall<T extends AsyncFunction[]>(tasks: T): Async<GetLastReturnType<T>> {
     let p: Promise<any> = resolve();

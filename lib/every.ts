@@ -5,6 +5,9 @@ import find from "./find";
 
 /**
  * Returns `true` if every element in `array` satisfies an async test.
+ * 
+ * @param array - The array to iterate on
+ * @param iterator - The iterator which test each item
  */
 export default function every<T>(array: T[], iterator: AsyncListIterator<T, boolean>): Promise<boolean> {
     return find(array, invert).then(result => !result);
