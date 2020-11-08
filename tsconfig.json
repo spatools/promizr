@@ -1,13 +1,15 @@
 {
     "compilerOptions": {
         "target": "ES5",
-        "module": "umd",
+        "module": "ES6",
+        "types": [
+            "node"
+        ],
         "lib": [
             "ES5",
             "ES2015.Promise"
         ],
         "strict": true,
-        "declaration": true,
         "esModuleInterop": true,
         "sourceMap": false
     },

@@ -1,6 +1,7 @@
 # Built result
 *.d.ts
 *.js
+*.mjs
 !*.config.js
 
 # Test results
@@ -9,6 +10,9 @@ tests/generated/
 
 # Dependencies
 node_modules/
+
+# Dist
+!dist/**/*.*
 
 # Temp files
 *.tmp
