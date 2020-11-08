@@ -3,6 +3,8 @@ import type { AsyncTask, AwaitedObject } from "./_types";
 import resolve from "./resolve";
 
 /**
+ * @public
+ * 
  * Run given tasks in parallel and resolves with an array of the results of each task.
  * 
  * @param tasks - The array of functions to execute in parallel
@@ -10,12 +12,21 @@ import resolve from "./resolve";
 export default function series<T>(tasks: Array<AsyncTask<T>>): Promise<T[]>;
 
 /**
+ * @public
+ * 
  * Run found tasks in given object in series and resolves with an object where all tasks are resolved to their values.
  * 
  * @param obj - The object which contains tasks to execute in parallel
  */
 export default function series<T extends Record<string, unknown>>(tasks: T): Promise<AwaitedObject<T>>;
 
+/**
+ * @public
+ * 
+ * Run given tasks in parallel and resolves with an array of the results of each task.
+ * 
+ * @param tasks - The array or object that contains functions to execute in parallel
+ */
 export default function series(tasks: AsyncTask[] | Record<string, unknown>): Promise<unknown> {
     return Array.isArray(tasks) ?
         listSeries(tasks) :

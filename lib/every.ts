@@ -4,6 +4,8 @@ import exec from "./exec";
 import find from "./find";
 
 /**
+ * @public
+ * 
  * Returns `true` if every element in `array` satisfies an async test.
  * 
  * @param array - The array to iterate on

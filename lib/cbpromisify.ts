@@ -3,6 +3,8 @@ import type { FunctionWithMultiCallbacks, FunctionWithMultiCallbacksReturnType, 
 import type { Async } from "./_types";
 
 /**
+ * @public
+ * 
  * Build a function that transform a multi-callback style function to a Promise version.
  * 
  * @param fn - The function to promisify
@@ -10,6 +12,8 @@ import type { Async } from "./_types";
 export default function cbpromisify<T extends FunctionWithMultiCallbacks>(fn: T): (...args: ParametersWithoutLast2<T>) => Async<FunctionWithMultiCallbacksReturnType<T>>;
 
 /**
+ * @public
+ * 
  * Build a function that transform a multi-callback style function to a Promise version.
  * 
  * @param owner - The `this` context to use when calling `fn`

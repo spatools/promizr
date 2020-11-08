@@ -4,6 +4,8 @@ import type { Func } from "./_internal";
 import resolve from "../lib/resolve";
 
 /**
+ * @public
+ * 
  * Execute `task` with given arguments by ensuring that the result is a Promise.
  * If task throws synchronously, it's wrapped as a Promise.
  *  

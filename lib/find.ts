@@ -3,6 +3,8 @@ import type { AsyncListIterator } from "./_types";
 import exec from "./exec";
 
 /**
+ * @public
+ * 
  * Returns the first value in `array` that passes an async truth test.
  * The `iterator` is applied in parallel, meaning the first iterator to return `true` resolve the global `find` Promise. 
  * That means the result might not be the first item in the original `array` (in terms of order) that passes the test.

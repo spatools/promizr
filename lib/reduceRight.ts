@@ -5,6 +5,8 @@ import resolve from "./resolve";
 import eachSeries from "./eachSeries";
 
 /**
+ * @public
+ * 
  * Same as {@link reduce}, only operates on `array` in reverse order.
  * 
  * @param array - The array to iterate on

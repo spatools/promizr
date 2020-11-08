@@ -3,6 +3,8 @@ import type { AsyncTask } from "./_types";
 import exec from "./exec";
 
 /**
+ * @public
+ * 
  * Executes `task` the given number of `times`.
  * Returns an array with the result of each `task` execution.
  * 

@@ -4,6 +4,8 @@ import type { Func, PartialParameters, RestOfParameters } from "./_internal";
 import exec from "./exec";
 
 /**
+ * @public
+ * 
  * Create a new function which exec `task` by combining arguments.
  * 
  * @param task - the function to partialize

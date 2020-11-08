@@ -3,6 +3,8 @@ import type { AsyncFunction } from "./_types";
 import exec from "./exec";
 
 /**
+ * @public
+ * 
  * Build a function that takes an argument, calls the `task` and resolve with the input argument.
  * This function is usefull to call a function during a Promise chain without breaking the chain.
  * 

@@ -3,6 +3,8 @@ import type { AsyncTask } from "./_types";
 import resolve from "./resolve";
 
 /**
+ * @public
+ * 
  * The same as {@link times}, only `tasks` are applied in series.
  * The next `task` is only called once the current one has completed.
  * 

@@ -3,6 +3,8 @@ import type { AsyncListIterator } from "./_types";
 import exec from "./exec";
 
 /**
+ * @public
+ * 
  * The opposite of {@link filter}.
  * Removes values that pass an `async` truth test.
  * 

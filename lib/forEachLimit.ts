@@ -1,4 +1,7 @@
 import forEachLimit from "./eachLimit";
 
-/** @alias eachLimit */
+/**
+ * @public
+ * @alias eachLimit
+ */
 export default forEachLimit;

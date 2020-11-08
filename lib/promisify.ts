@@ -2,6 +2,8 @@ import type { FunctionWithNodeStyleCallback, FunctionWithNodeStyleCallbackReturn
 import type { Async } from "./_types";
 
 /**
+ * @public
+ * 
  * Build a function that transform a Node-Style callback function to a Promise version.
  * 
  * @param fn - The function to promisify
@@ -9,6 +11,8 @@ import type { Async } from "./_types";
 export default function promisify<T extends FunctionWithNodeStyleCallback>(fn: T): (...args: ParametersWithoutLast<T>) => Async<FunctionWithNodeStyleCallbackReturnType<T>>;
 
 /**
+ * @public
+ * 
  * Build a function that transform a Node-Style callback function to a Promise version.
  * 
  * @param owner - The `this` context to use when calling `fn`

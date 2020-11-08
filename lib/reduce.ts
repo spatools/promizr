@@ -5,6 +5,8 @@ import resolve from "./resolve";
 import eachSeries from "./eachSeries";
 
 /**
+ * @public
+ * 
  * Reduces `array` into a single value using an async `iterator` to return each successive step.
  * `memo` is the initial state of the reduction.
  * This function only operates in series.
