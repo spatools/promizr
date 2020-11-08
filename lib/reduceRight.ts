@@ -5,7 +5,11 @@ import resolve from "./resolve";
 import eachSeries from "./eachSeries";
 
 /**
- * Same as `reduce`, only operates on `array` in reverse order.
+ * Same as {@link reduce}, only operates on `array` in reverse order.
+ * 
+ * @param array - The array to iterate on
+ * @param memo - The starting value for the reduce operation
+ * @param iterator - The function that reduce each item and return the reduced result
  */
 export default function reduceRight<T, U>(array: T[], memo: U, iterator: AsyncReduceIterator<T, U>): Promise<U> {
     return eachSeries([...array].reverse(), reducer).then(() => memo);

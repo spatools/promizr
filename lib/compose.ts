@@ -6,7 +6,10 @@ import resolve from "./resolve";
 /**
  * Prepare a new function that transfer its arguments to the last `task` then calls each `task` using the result of the previous `task`.
  * Resolves with the result of the first `task`.
+ * 
  * Note: Execution order if from end to start.
+ * 
+ * @param tasks - Functions to be run from last to first
  */
 export default function compose<T extends AsyncFunction[]>(...tasks: T): (...args: Parameters<GetLast<T>>) => Async<GetFirstReturnType<T>> {
     return function (this: unknown, ...args: unknown[]): Async<GetFirstReturnType<T>> {

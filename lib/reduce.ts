@@ -14,6 +14,10 @@ import eachSeries from "./eachSeries";
  * 
  * This function is for situations where each step in the reduction needs to be async; 
  * if you can get the data before reducing it, then it's probably a good idea to do so.
+ * 
+ * @param array - The array to iterate on
+ * @param memo - The starting value for the reduce operation
+ * @param iterator - The function that reduce each item and return the reduced result
  */
 export default function reduce<T, U>(array: T[], memo: U, iterator: AsyncReduceIterator<T, U>): Promise<U> {
     return eachSeries(array, reducer).then(() => memo);

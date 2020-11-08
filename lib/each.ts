@@ -9,8 +9,8 @@ import exec from "./exec";
  * 
  * Note: since this function applies `iterator` to each item in parallel, there is no guarantee that the iterator functions will complete in order.
  * 
- * @param array The array to iterate on
- * @param iterator The iterator to apply on each item
+ * @param array - The array to iterate on
+ * @param iterator - The iterator to apply on each item
  */
 export default function each<T>(array: T[], iterator: AsyncListIterator<T, unknown>): Promise<void> {
     const promises = array.map(executor);

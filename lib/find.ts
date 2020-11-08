@@ -7,6 +7,9 @@ import exec from "./exec";
  * The `iterator` is applied in parallel, meaning the first iterator to return `true` resolve the global `find` Promise. 
  * That means the result might not be the first item in the original `array` (in terms of order) that passes the test.
  * If order within the original `array` is important, then look at `findSeries`.
+ * 
+ * @param array - The array to iterate on
+ * @param iterator - The iterator which test each item
  */
 export default function find<T>(array: T[], iterator: AsyncListIterator<T, boolean>): Promise<T | undefined> {
     const len = array.length;

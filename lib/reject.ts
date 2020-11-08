@@ -3,8 +3,11 @@ import type { AsyncListIterator } from "./_types";
 import exec from "./exec";
 
 /**
- * The opposite of `filter`.
+ * The opposite of {@link filter}.
  * Removes values that pass an `async` truth test.
+ * 
+ * @param array - The array to iterate on
+ * @param iterator - The iterator which test each item
  */
 export default function reject<T>(array: T[], iterator: AsyncListIterator<T, boolean>): Promise<T[]> {
     const results: T[] = [];

@@ -5,6 +5,9 @@ import map from "./map";
 
 /**
  * Sorts a list by the results of running each `array` value through an async `iterator`.
+ * 
+ * @param array - The array to iterate on
+ * @param iterator - The function which returns the sort index
  */
 export default function sortBy<T, U>(array: T[], iterator: AsyncListIterator<T, U>): Promise<T[]> {
     return map(array, sortMapper).then(result => result.sort(sortFunction).map(i => i.source));
