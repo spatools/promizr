@@ -42,10 +42,7 @@
     "lint:ts": "eslint --ext .ts *.ts lib/**/*.ts",
     "clean": "npm run clean:ts",
     "clean:ts": "rimraf index.{js,d.ts} lib/**/*.{js,d.ts} temp coverage",
-    "clean:dist": "rimraf dist",
-    "preversion": "npm run lint",
-    "postversion": "git push && git push --tags",
-    "prepublishOnly": "npm test && npm run build"
+    "clean:dist": "rimraf dist"
   },
   "devDependencies": {
     "@commitlint/cli": "^11.0.0",
