@@ -281,12 +281,7 @@
                         errors[_i] = arguments[_i];
                     }
                     if (errors.length === 1) {
-                        errors = errors[0];
-                    }
-                    if (!(errors instanceof Error)) {
-                        var err = new Error(errors.toString());
-                        err.innerError = errors;
-                        return reject(errors);
+                        return reject(errors[0]);
                     }
                     reject(errors);
                 }
@@ -609,6 +604,7 @@
         return QueueError;
     }(Error));
 
+    /* istanbul ignore file */
     /**
      * @public
      *
@@ -1237,6 +1233,9 @@
             var _this = _super.call(this, worker, limit, options) || this;
             _this.defaultPriority = 1;
             _this.items = [];
+            if (typeof (options === null || options === void 0 ? void 0 : options.defaultPriority) !== "undefined") {
+                _this.defaultPriority = options.defaultPriority;
+            }
             return _this;
         }
         PriorityQueue.prototype.push = function () {
@@ -1259,7 +1258,7 @@
                 datas[_i] = arguments[_i];
             }
             var priority = this.defaultPriority;
-            if (typeof datas[0] === "number") {
+            if (typeof datas[0] === "number" && datas.length > 1) {
                 priority = datas.shift();
             }
             if (datas.length === 1 && Array.isArray(datas[0])) {
