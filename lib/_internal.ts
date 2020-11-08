@@ -65,19 +65,3 @@ export type FunctionWithMultiCallbacks = (...args: [...any, SimpleCallback, Erro
 export type FunctionWithMultiCallbacksReturnType<T extends FunctionWithMultiCallbacks> = SimpleCallbackResultType<GetLast2<Parameters<T>>>;
 
 //#endregion
-
-//#region Queue
-
-export type QueueItemOptions<T> = {
-    data: T;
-    priority?: number;
-};
-
-export type QueueItem<T, U> = QueueItemOptions<T> & {
-    resolver(result: U): void;
-    rejecter(err: Error): void;
-}
-
-export type QueueWorker<T, U> = (arg: T) => U | Promise<U>;
-
-//#endregion

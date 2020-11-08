@@ -1,12 +1,14 @@
-import type { Deferred, QueueOptions } from "./_types";
-import type { QueueItem, QueueWorker } from "./_internal";
+import type { Deferred, PriorityQueueOptions } from "./_types";
 
 import Queue from "./Queue";
 import defer from "./defer";
 
+type PriorityQueueItem<T, P> = Queue<T, P>["items"][number] & { priority?: number; };
 
 export default class PriorityQueue<T, U> extends Queue<T, U> {
     public defaultPriority = 1;
+
+    protected items: Array<PriorityQueueItem<T, U>> = [];
 
     /**
      * Creates a new PriorityQueue.
@@ -15,7 +17,7 @@ export default class PriorityQueue<T, U> extends Queue<T, U> {
      * @param limit The maximum number of concurrent workers to launch
      * @param options The options for the PriorityQueue
      */
-    constructor(worker: QueueWorker<T, U>, limit?: number, options?: QueueOptions) {
+    constructor(worker: (arg: T) => U | Promise<U>, limit?: number, options?: PriorityQueueOptions) {
         super(worker, limit, options);
     }
 
@@ -84,11 +86,11 @@ export default class PriorityQueue<T, U> extends Queue<T, U> {
         return dfd.promise;
 
 
-        function createIterator(count: number, dfd: Deferred<U | U[]>, priority: number): (data: T) => QueueItem<T, U> {
+        function createIterator(count: number, dfd: Deferred<U | U[]>, priority: number): (data: T) => PriorityQueueItem<T, U> {
             const errors: any[] = [];
             const results: U[] = [];
 
-            return function (this: PriorityQueue<T, U>, data: T): QueueItem<T, U> {
+            return function (this: PriorityQueue<T, U>, data: T): PriorityQueueItem<T, U> {
                 const item = this.createItem(data, results, errors, count, dfd.resolve, dfd.reject);
                 item.priority = priority;
                 return item;
@@ -96,7 +98,7 @@ export default class PriorityQueue<T, U> extends Queue<T, U> {
         }
     }
 
-    private binarySearch(seq: Array<QueueItem<T, U>>, item: { priority?: number }, compare: (a: { priority?: number }, b: { priority?: number }) => number): number {
+    private binarySearch(seq: Array<PriorityQueueItem<T, U>>, item: { priority?: number }, compare: (a: { priority?: number }, b: { priority?: number }) => number): number {
         let beg = -1;
         let end = seq.length - 1;
 
