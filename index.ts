@@ -4,6 +4,8 @@
  * Promise extensions and utility methods.
  */
 
+/* istanbul ignore file */
+
 export * from "./lib/_types";
 
 export { default as apply } from "./lib/apply";

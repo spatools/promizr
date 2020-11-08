@@ -37,7 +37,7 @@ describe("promizr.parallelLimit()", () => {
             const err = new Error("test");
             const spy = jest.fn(() => { throw err; });
 
-            const tasks = LIST.map((n, i) => () => timeout(1).then(spy));
+            const tasks = LIST.map((n, i) => () => timeout(n).then(spy));
 
             await expect(parallelLimit(tasks, LIMIT))
                 .rejects.toBe(err);
@@ -146,7 +146,7 @@ describe("promizr.parallelLimit()", () => {
 
     });
 
-    describe("with an array", () => {
+    describe("with an object", () => {
 
         test("should returns a Promise which resolves when all tasks are done", async () => {
             const spy = jest.fn(n => async () => n * n);
@@ -169,7 +169,7 @@ describe("promizr.parallelLimit()", () => {
             const err = new Error("test");
             const spy = jest.fn<any, []>(() => { throw err; });
 
-            const obj = createExecutorObject(LIST, () => () => timeout(1).then(spy));
+            const obj = createExecutorObject(LIST, (n) => () => timeout(n).then(spy));
 
             await expect(parallelLimit(obj, LIMIT))
                 .rejects.toBe(err);

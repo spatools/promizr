@@ -36,7 +36,7 @@ describe("promizr.mapLimit()", () => {
         const err = new Error("test");
         const spy = jest.fn(() => { throw err; });
 
-        await expect(mapLimit(LIST, LIMIT, () => timeout(1).then(spy)))
+        await expect(mapLimit(LIST, LIMIT, (n) => timeout(n).then(spy)))
             .rejects.toBe(err);
 
         expect(spy).toHaveBeenCalledTimes(1);

@@ -44,13 +44,7 @@ export default function cbpromisify<T extends FunctionWithMultiCallbacks>(owner:
 
             function error(...errors: any[]): void {
                 if (errors.length === 1) {
-                    errors = errors[0];
-                }
-
-                if (!(errors instanceof Error)) {
-                    const err: any = new Error(errors.toString());
-                    err.innerError = errors;
-                    return reject(errors);
+                    return reject(errors[0]);
                 }
 
                 reject(errors);
