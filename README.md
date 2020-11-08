@@ -1,8 +1,10 @@
 ﻿# promizr
 
+[![NPM version](https://img.shields.io/npm/v/promizr.svg)](https://npmjs.org/package/promizr)
 [![Unit Tests](https://github.com/spatools/promizr/workflows/Unit%20Tests/badge.svg)](https://github.com/spatools/promizr/actions?query=workflow%3A%22Unit+Tests%22)
 [![Coverage Status](https://coveralls.io/repos/github/spatools/promizr/badge.svg?branch=%40release/v1)](https://coveralls.io/github/spatools/promizr?branch=%40release/v1)
-[![NPM version](https://badge.fury.io/js/promizr.png)](http://badge.fury.io/js/promizr)
+[![License](https://img.shields.io/badge/license-MIT-green.svg)](http://opensource.org/licenses/MIT)
+[![semantic-release](https://img.shields.io/badge/%20%20%F0%9F%93%A6%F0%9F%9A%80-semantic--release-e10079.svg)](https://github.com/semantic-release/semantic-release)
 
 
 Promise extensions and utility methods (Timeout, Filtering, Mapping, Queue, etc.).
