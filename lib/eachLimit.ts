@@ -3,6 +3,8 @@ import type { AsyncListIterator, QueueOptions } from "./_types";
 import TaskQueue from "./TaskQueue";
 
 /**
+ * @public
+ * 
  * Sames as {@link each} but limit the number of concurrent iterator.
  * 
  * @param array - The array to iterate on

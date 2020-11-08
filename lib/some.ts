@@ -3,6 +3,8 @@ import type { AsyncListIterator } from "./_types";
 import find from "./find";
 
 /**
+ * @public
+ * 
  * Returns `true` if at least one element in the `array` satisfies an async test.
  * The `Promise` returned by each `iterator` call can only returns boolean value!
  * Once any iterator call returns `true`, the main `Promise` is resolved.

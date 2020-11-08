@@ -3,6 +3,8 @@ import type { AsyncListIterator } from "./_types";
 import map from "./map";
 
 /**
+ * @public
+ * 
  * Applies `iterator` to each item in `array`, concatenating the results.
  * Returns the concatenated list. 
  * 

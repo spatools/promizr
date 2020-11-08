@@ -4,6 +4,8 @@ import resolve from "./resolve";
 import eachSeries from "./eachSeries";
 
 /**
+ * @public
+ * 
  * The same as {@link reject}, only the `iterator` is applied to each item in `array` in series.
  * 
  * @param array - The array to iterate on

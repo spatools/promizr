@@ -3,6 +3,8 @@ import type { Async, AsyncFunction } from "./_types";
 import series from "./series";
 
 /**
+ * @public
+ * 
  * The same as {@link applyEach}, only `tasks` are applied in series.
  * The next `task` is only called once the current one has completed.
  * This means the `task` functions will complete in order.

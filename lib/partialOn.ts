@@ -4,6 +4,8 @@ import type { Func, MethodNames, PartialParameters, RestOfParameters } from "./_
 import execOn from "./execOn";
 
 /**
+ * @public
+ * 
  * Same as {@link partial} but call the `task` with `owner` `this` context.
  * If task is a string, it calls `owner[task]` function.
  * 
@@ -14,6 +16,8 @@ import execOn from "./execOn";
 export default function partialOn<O, Key extends MethodNames<O>, Arguments extends PartialParameters<O[Key]>>(owner: O, task: Key, ...args: Arguments): (...args: RestOfParameters<O[Key], Arguments>) => Async<ReturnType<O[Key]>>;
 
 /**
+ * @public
+ * 
  * Same as {@link partial} but call the `task` with `owner` `this` context
  * 
  * @param owner - `this` context to use when calling `task`

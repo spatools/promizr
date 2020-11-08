@@ -1,4 +1,6 @@
 /**
+ * @public
+ * 
  * Returns a Promise that resolves when timer is done.
  * 
  * @param ms - Milliseconds to wait before resolving the Promise

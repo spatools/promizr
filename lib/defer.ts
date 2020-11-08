@@ -1,6 +1,8 @@
 import type { Deferred } from "./_types";
 
 /**
+ * @public
+ * 
  * Returns a new Deferred object.
  * 
  * A Deferred object is an object containing 3 properties: `resolve`, `reject` and `promise`.

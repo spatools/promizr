@@ -4,6 +4,8 @@ import resolve from "./resolve";
 import map from "./map";
 
 /**
+ * @public
+ * 
  * Sorts a list by the results of running each `array` value through an async `iterator`.
  * 
  * @param array - The array to iterate on

@@ -4,6 +4,8 @@ import resolve from "./resolve";
 import eachSeries from "./eachSeries";
 
 /**
+ * @public
+ * 
  * The same as {@link map}, only the `iterator` is applied to each item in `array` in series.
  * The next `iterator` is only called once the current one has completed.
  * The results array will be in the same order as the original.

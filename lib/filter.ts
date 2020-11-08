@@ -3,6 +3,8 @@ import type { AsyncListIterator } from "./_types";
 import exec from "./exec";
 
 /**
+ * @public
+ * 
  * Returns a new array of all the values in `array` which pass an async truth test.
  * The Promise returned by each `iterator` call can only returns `boolean` value!
  * This operation is performed in parallel, the results array could be in a different order as the original.

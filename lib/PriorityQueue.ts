@@ -6,6 +6,8 @@ import defer from "./defer";
 type PriorityQueueItem<T, P> = Queue<T, P>["items"][number] & { priority?: number; };
 
 /**
+ * @public
+ * 
  * A PriorityQueue is like a {@link Queue} but executes items in priority order.
  */
 export default class PriorityQueue<T, U> extends Queue<T, U> {
@@ -16,9 +18,9 @@ export default class PriorityQueue<T, U> extends Queue<T, U> {
     /**
      * Creates a new PriorityQueue.
      * 
-     * @param worker The worker function to apply on each item in PriorityQueue
-     * @param limit The maximum number of concurrent workers to launch
-     * @param options The options for the PriorityQueue
+     * @param worker - The worker function to apply on each item in PriorityQueue
+     * @param limit - The maximum number of concurrent workers to launch
+     * @param options - The options for the PriorityQueue
      */
     constructor(worker: (arg: T) => U | Promise<U>, limit?: number, options?: PriorityQueueOptions) {
         super(worker, limit, options);
