@@ -28,7 +28,7 @@
     "dist/**/*.*"
   ],
   "scripts": {
-    "build": "npm run clean && npm run lint && npm run build:rollup && npm run build:docs",
+    "build": "npm run clean && npm run clean:dist && npm run lint && npm run build:rollup && npm run build:docs",
     "build:rollup": "rollup -c",
     "build:docs": "npm run build:docs:types && npm run build:docs:extract && npm run build:docs:generate",
     "build:docs:types": "tsc --declaration --emitDeclarationOnly --declarationDir temp",
@@ -41,7 +41,8 @@
     "lint": "npm run lint:ts",
     "lint:ts": "eslint --ext .ts *.ts lib/**/*.ts",
     "clean": "npm run clean:ts",
-    "clean:ts": "rimraf index.{js,d.ts} lib/**/*.{js,d.ts} dist temp",
+    "clean:ts": "rimraf index.{js,d.ts} lib/**/*.{js,d.ts} temp",
+    "clean:dist": "rimraf dist",
     "preversion": "npm run lint",
     "postversion": "git push && git push --tags",
     "prepublishOnly": "npm test && npm run build"
