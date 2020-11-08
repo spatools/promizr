@@ -27,7 +27,7 @@ export type Deferred<T> = {
     promise: Promise<T>;
 }
 
-/** Options to create Queues. */
+/** Options to create a Queue. */
 export interface QueueOptions {
     onempty?: (() => any) | undefined;
     ondrain?: (() => any) | undefined;
@@ -35,4 +35,9 @@ export interface QueueOptions {
 
     stopOnError?: boolean;
     waitToReject?: boolean;
+}
+
+/** Options to create a PriorityQueue. */
+export interface PriorityQueueOptions extends QueueOptions {
+    defaultPriority?: number;
 }

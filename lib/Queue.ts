@@ -1,5 +1,4 @@
 import type { Deferred, QueueOptions } from "./_types";
-import type { QueueItem, QueueWorker } from "./_internal";
 
 import QueueError from "./QueueError";
 
@@ -7,9 +6,17 @@ import nextTick from "./nextTick";
 import defer from "./defer";
 import exec from "./exec";
 
+type QueueItem<T, U> = {
+    data: T;
+    priority?: number;
+
+    resolver(result: U): void;
+    rejecter(err: Error): void;
+}
+
 export default class Queue<T, U> {
     protected items: Array<QueueItem<T, U>> = [];
-    protected worker: QueueWorker<T, U>;
+    protected worker: (arg: T) => U | Promise<U>;
     protected workers = 0;
 
     protected started = false;
@@ -44,7 +51,7 @@ export default class Queue<T, U> {
      * @param limit The maximum number of concurrent workers to launch
      * @param options The options for the Queue
      */
-    constructor(worker: QueueWorker<T, U>, limit = 1, options?: QueueOptions) {
+    constructor(worker: (arg: T) => U | Promise<U>, limit = 1, options?: QueueOptions) {
         this.worker = worker;
         this.limit = limit;
 

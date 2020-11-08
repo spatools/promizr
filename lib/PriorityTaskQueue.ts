@@ -1,4 +1,4 @@
-import type { AsyncTask, QueueOptions } from "./_types";
+import type { AsyncTask, PriorityQueueOptions } from "./_types";
 
 import PriorityQueue from "./PriorityQueue";
 
@@ -10,7 +10,7 @@ export default class PriorityTaskQueue<T> extends PriorityQueue<AsyncTask<T>, T>
      * @param limit The maximum number of concurrent tasks to launch
      * @param options The options for the PriorityTaskQueue
      */
-    constructor(limit?: number, options?: QueueOptions) {
+    constructor(limit?: number, options?: PriorityQueueOptions) {
         super(item => item(), limit, options);
     }
 
