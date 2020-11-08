@@ -7,5 +7,10 @@ module.exports = {
     collectCoverageFrom: [
       "*.ts",
       "lib/**/*.ts"
-    ]
+    ],
+    globals: {
+      "ts-jest": {
+        tsconfig: "tests/tsconfig.test.json"
+      }
+    }
 };

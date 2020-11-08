@@ -15,10 +15,8 @@ describe("promizr", () => {
 
     test("should export all modules in lib", async () => {
         for (const moduleFile of MODULES) {
-            const key = path.basename(moduleFile, ".ts");
-            const module = await import(path.join(LIB_DIR, moduleFile));
-
-            expect(promizr).toHaveProperty(key, module.default);
+            const key = path.basename(moduleFile, ".ts") as keyof typeof promizr;
+            expect(promizr).toHaveProperty(key);
         }
     });
 
