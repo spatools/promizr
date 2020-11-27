@@ -54,6 +54,7 @@ Promise extensions and utility methods.
 |  [mapLimit(array, limit, iterator, options)](./promizr.maplimit.md) | Sames as [map()](./promizr.map.md) but limit the number of iterators that run concurrently.<!-- -->Note: The resulting array may not be in the same order as the source array. |
 |  [mapSeries(array, iterator)](./promizr.mapseries.md) | The same as [map()](./promizr.map.md)<!-- -->, only the <code>iterator</code> is applied to each item in <code>array</code> in series. The next <code>iterator</code> is only called once the current one has completed. The results array will be in the same order as the original. |
 |  [memoize(task, hash)](./promizr.memoize.md) | Prepare a function that call the <code>task</code> and memoize the result to avoid calling it again. If <code>hash</code> is <code>true</code>, memoize the result based on a hash of input arguments (default hash function: <code>JSON.stringify(args)</code>). If <code>hash</code> is a function, memoize the result based on the hash returned by the function (signature: (args: any\[\]) =<!-- -->&gt; string).<!-- -->Note: The <code>hash</code> function is synchronous. |
+|  [nextTick(callback)](./promizr.nexttick.md) | Same as  but could not be aborted. |
 |  [parallel(tasks)](./promizr.parallel.md) | Run given tasks in parallel and resolves with an array of the results of each task. |
 |  [parallel(obj)](./promizr.parallel_1.md) | Run found tasks in given object in parallel and resolves with an object where all tasks are resolved to their values. |
 |  [parallelLimit(tasks, limit, options)](./promizr.parallellimit.md) | Sames as  but limit the number of tasks that run concurrently.<!-- -->Note: The resulting array may not be in the same order as the source array. |
@@ -96,8 +97,9 @@ Promise extensions and utility methods.
 
 |  Variable | Description |
 |  --- | --- |
-|  [nextTick](./promizr.nexttick.md) | Use the best next tick function depending on platform. |
+|  [clearImmediate\_2](./promizr.clearimmediate_2.md) | Abort a previously  callback. |
 |  [resolve](./promizr.resolve.md) | Alias for <code>Promise.resolve</code>. |
+|  [setImmediate\_2](./promizr.setimmediate_2.md) | Use the best setImmediate equivalent function depending on platform. |
 
 ## Type Aliases
 

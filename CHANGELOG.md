@@ -1,3 +1,10 @@
+# [1.1.0](https://github.com/spatools/promizr/compare/v1.0.0...v1.1.0) (2020-11-27)
+
+
+### Features
+
+* use better implementation of setImmediate ([09e3e29](https://github.com/spatools/promizr/commit/09e3e29ba9b9d0486b7dc5b8457bc87a79646bb1))
+
 # [1.0.0](https://github.com/spatools/promizr/compare/v0.2.9...v1.0.0) (2020-11-08)
 
 

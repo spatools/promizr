@@ -187,6 +187,16 @@ export declare function cbpromisify<O, T extends FunctionWithMultiCallbacks>(own
 /**
  * @public
  *
+ * Abort a previously {@see setImmediate} callback.
+ *
+ * @param handle - The handle retrieved by setImmediate.
+ */
+declare const clearImmediate_2: (handle: Handle) => void;
+export { clearImmediate_2 as clearImmediate }
+
+/**
+ * @public
+ *
  * Prepare a new function that transfer its arguments to the last `task` then calls each `task` using the result of the previous `task`.
  * Resolves with the result of the first `task`.
  *
@@ -461,6 +471,8 @@ declare type GetLength<Tuple extends readonly any[]> = Tuple extends {
     length: infer L;
 } ? L : -1;
 
+declare type Handle = number;
+
 declare type HashFunction = (args: any[]) => string;
 
 /**
@@ -545,13 +557,11 @@ declare type MethodNames<T> = {
 /**
  * @public
  *
- * Use the best next tick function depending on platform.
+ * Same as {@see setImmediate} but could not be aborted.
  *
- * @param cb - The callback to call on next tick
+ * @param callback - The callback to call at the end of the event loop.
  */
-export declare const nextTick: (cb: NextTickCallback) => void;
-
-declare type NextTickCallback = () => void;
+export declare function nextTick(callback: () => void): void;
 
 declare type NodeStyleCallback<T = any> = (err: any, ...rest: T[]) => any;
 
@@ -980,6 +990,17 @@ export declare function series<T>(tasks: Array<AsyncTask<T>>): Promise<T[]>;
  * @param obj - The object which contains tasks to execute in parallel
  */
 export declare function series<T extends Record<string, unknown>>(tasks: T): Promise<AwaitedObject<T>>;
+
+/**
+ * @public
+ *
+ * Use the best setImmediate equivalent function depending on platform.
+ *
+ * @param callback - The callback to call at the end of the event loop.
+ * @param args - Arguments to apply to callback.
+ */
+declare const setImmediate_2: <T extends readonly unknown[]>(callback: (...args: T) => void, ...args: T) => Handle;
+export { setImmediate_2 as setImmediate }
 
 declare type SimpleCallback<T = any> = (...args: T[]) => any;
 

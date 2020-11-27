@@ -506,120 +506,177 @@ class QueueError extends Error {
 }
 
 /* istanbul ignore file */
+let _setImmediate;
+let _clearImmediate;
+(function (global) {
+    if (global.setImmediate && global.clearImmediate) {
+        _setImmediate = global.setImmediate;
+        _clearImmediate = global.clearImmediate;
+        return;
+    }
+    const doc = global.document;
+    const tasks = {};
+    let nextHandle = 1; // Spec says greater than zero
+    let running = false;
+    const platformImplementation = getPlatformImplementation();
+    _setImmediate = (callback, ...args) => {
+        // Callback can either be a function or a string
+        if (typeof callback !== "function") {
+            callback = new Function("" + callback);
+        }
+        // Store and register the task
+        tasks[nextHandle] = { c: callback, a: args };
+        platformImplementation(nextHandle);
+        return nextHandle++;
+    };
+    _clearImmediate = (handle) => {
+        delete tasks[handle];
+    };
+    function getPlatformImplementation() {
+        // Don't get fooled by e.g. browserify environments.
+        if ({}.toString.call(global.process) === "[object process]") {
+            // For Node.js before 0.9
+            return nextTickImplementation();
+        }
+        else if (canUsePostMessage()) {
+            // For non-IE10 modern browsers
+            return postMessageImplementation();
+        }
+        else if (global.MessageChannel) {
+            // For web workers, where supported
+            return messageChannelImplementation();
+        }
+        else if (doc && "onreadystatechange" in doc.createElement("script")) {
+            // For IE 6–8
+            return readyStateChangeImplementation();
+        }
+        else {
+            // For older browsers
+            return setTimeoutImplementation();
+        }
+    }
+    function nextTickImplementation() {
+        return (handle) => {
+            process.nextTick(() => { runIfPresent(handle); });
+        };
+    }
+    function canUsePostMessage() {
+        // The test against `importScripts` prevents this implementation from being installed inside a web worker,
+        // where `global.postMessage` means something completely different and can't be used for this purpose.
+        if (global.postMessage && !global.importScripts) {
+            let postMessageIsAsynchronous = true;
+            const onmessage = () => {
+                postMessageIsAsynchronous = false;
+                if (global.removeEventListener)
+                    global.removeEventListener("message", onmessage, false);
+                else
+                    global.detachEvent("onmessage", onmessage);
+            };
+            if (global.addEventListener)
+                global.addEventListener("message", onmessage, false);
+            else
+                global.attachEvent("onmessage", onmessage);
+            global.postMessage("", "*");
+            return postMessageIsAsynchronous;
+        }
+    }
+    function postMessageImplementation() {
+        // Installs an event handler on `global` for the `message` event: see
+        // * https://developer.mozilla.org/en/DOM/window.postMessage
+        // * http://www.whatwg.org/specs/web-apps/current-work/multipage/comms.html#crossDocumentMessages
+        const messagePrefix = "setImmediate$" + Math.random() + "$";
+        if (global.addEventListener)
+            global.addEventListener("message", onGlobalMessage, false);
+        else
+            global.attachEvent("onmessage", onGlobalMessage);
+        return (handle) => {
+            global.postMessage(messagePrefix + handle, "*");
+        };
+        function onGlobalMessage(event) {
+            if (event.source === global && typeof event.data === "string" && startsWith(event.data, messagePrefix)) {
+                runIfPresent(+event.data.slice(messagePrefix.length));
+            }
+        }
+    }
+    function messageChannelImplementation() {
+        const channel = new global.MessageChannel();
+        channel.port1.onmessage = (event) => { runIfPresent(event.data); };
+        return (handle) => {
+            channel.port2.postMessage(handle);
+        };
+    }
+    function readyStateChangeImplementation() {
+        const html = doc.documentElement;
+        return (handle) => {
+            // Create a <script> element; its readystatechange event will be fired asynchronously once it is inserted
+            // into the document. Do so, thus queuing up the task. Remember to clean up once it's been called.
+            let script = doc.createElement("script");
+            script.onreadystatechange = () => {
+                runIfPresent(handle);
+                script.onreadystatechange = null;
+                html.removeChild(script);
+                script = null;
+            };
+            html.appendChild(script);
+        };
+    }
+    function setTimeoutImplementation() {
+        return (handle) => {
+            setTimeout(runIfPresent, 0, handle);
+        };
+    }
+    function runIfPresent(handle) {
+        // From the spec: "Wait until any invocations of this algorithm started before this one have completed."
+        // So if we're currently running a task, we'll need to delay this invocation.
+        if (running) {
+            // Delay by doing a setTimeout. setImmediate was tried instead, but in Firefox 7 it generated a
+            // "too much recursion" error.
+            setTimeout(runIfPresent, 0, handle);
+        }
+        else {
+            const task = tasks[handle];
+            if (task) {
+                running = true;
+                try {
+                    const { c, a } = task;
+                    c(...a);
+                }
+                finally {
+                    _clearImmediate(handle);
+                    running = false;
+                }
+            }
+        }
+    }
+    function startsWith(str, value) {
+        const len = value.length;
+        for (let i = 0; i < len; i++) {
+            if (str[i] !== value[i]) {
+                return false;
+            }
+        }
+        return true;
+    }
+    /* eslint-disable-next-line @typescript-eslint/ban-ts-comment */
+    //@ts-ignore
+}(typeof self === "undefined" ? typeof global === "undefined" ? undefined : global : self));
 /**
  * @public
  *
- * Use the best next tick function depending on platform.
+ * Use the best setImmediate equivalent function depending on platform.
  *
- * @param cb - The callback to call on next tick
+ * @param callback - The callback to call at the end of the event loop.
+ * @param args - Arguments to apply to callback.
  */
-const nextTick = (function (self) {
-    // Node.JS
-    if (typeof self.process !== "undefined" && Object.prototype.toString.call(self.process) === "[object process]") {
-        if (global.setImmediate) {
-            return (cb) => {
-                global.setImmediate(cb);
-            };
-        }
-        else {
-            return (cb) => {
-                process.nextTick(cb);
-            };
-        }
-    }
-    // Web Workers
-    else if (typeof self.Uint8ClampedArray !== "undefined" && typeof self.importScripts !== "undefined" && typeof self.MessageChannel !== "undefined") {
-        const channel = new self.MessageChannel();
-        return (cb) => {
-            channel.port1.onmessage = cb;
-            channel.port2.postMessage(0);
-        };
-    }
-    // Browser
-    else {
-        const win = self.window;
-        const tempCallbacks = [];
-        // Mutation Observer
-        if (win.MutationObserver || win.WebKitMutationObserver) {
-            const MutationObserver = win.MutationObserver || win.WebKitMutationObserver;
-            const observer = new MutationObserver(() => {
-                let cb;
-                while ((cb = tempCallbacks.shift()) || tempCallbacks.length) {
-                    if (cb)
-                        cb();
-                }
-            });
-            const node = self.document.createTextNode("");
-            observer.observe(node, { characterData: true });
-            let iterations = 0;
-            return (cb) => {
-                tempCallbacks.push(cb);
-                node.data = (iterations = ++iterations % 2);
-            };
-        }
-        // Post Message
-        else if (canUsePostMessage(win)) {
-            const messagePrefix = "setImmediate$" + Math.random() + "$";
-            const onGlobalMessage = createGlobalMessageHandler(win, tempCallbacks, messagePrefix);
-            if (win.addEventListener) {
-                win.addEventListener("message", onGlobalMessage, false);
-            }
-            else {
-                win.attachEvent("onmessage", onGlobalMessage);
-            }
-            return (cb) => {
-                tempCallbacks.push(cb);
-                win.postMessage(messagePrefix + Math.random() * 1000, "*");
-            };
-        }
-        // Set timeout
-        else {
-            return (cb) => {
-                setTimeout(cb, 1);
-            };
-        }
-    }
-})(getGlobal());
-function createGlobalMessageHandler(win, tempCallbacks, messagePrefix) {
-    return (event) => {
-        if (event.source === win && typeof event.data === "string" && event.data.indexOf(messagePrefix) === 0) {
-            let cb;
-            while ((cb = tempCallbacks.shift()) || tempCallbacks.length) {
-                if (cb)
-                    cb();
-            }
-        }
-    };
-}
-function canUsePostMessage(win) {
-    // The test against `importScripts` prevents this implementation from being installed inside a web worker,
-    // where `global.postMessage` means something completely different and can"t be used for this purpose.
-    if (win.postMessage && !win.importScripts) {
-        const oldOnMessage = win.onmessage;
-        let postMessageIsAsynchronous = true;
-        win.onmessage = () => { postMessageIsAsynchronous = false; };
-        win.postMessage("", "*");
-        win.onmessage = oldOnMessage;
-        return postMessageIsAsynchronous;
-    }
-    return false;
-}
-/* eslint-disable @typescript-eslint/ban-ts-comment */
-function getGlobal() {
-    //@ts-ignore
-    if (typeof self !== "undefined") {
-        return self;
-    }
-    //@ts-ignore
-    if (typeof window !== "undefined") {
-        return window;
-    }
-    //@ts-ignore
-    if (typeof global !== "undefined") {
-        return global;
-    }
-    throw new Error("unable to locate global object");
-}
+const setImmediate = _setImmediate;
+/**
+ * @public
+ *
+ * Abort a previously {@see setImmediate} callback.
+ *
+ * @param handle - The handle retrieved by setImmediate.
+ */
+const clearImmediate = _clearImmediate;
 
 /**
  * @public
@@ -755,7 +812,7 @@ class Queue {
             this.onempty();
         }
         this.workers += 1;
-        nextTick(this.createItemProcess(item));
+        setImmediate(this.createItemProcess(item));
     }
     createItemProcess(item) {
         return () => {
@@ -945,7 +1002,7 @@ function forever(task) {
  * Returns a Promise that resolves on next tick.
  */
 function immediate() {
-    return new Promise(resolve => { nextTick(resolve); });
+    return new Promise(resolve => { setImmediate(resolve); });
 }
 
 /**
@@ -1015,6 +1072,17 @@ function memoize(task, hash) {
 function save(cache, hashed, value) {
     cache[hashed || "default"] = value;
     return value;
+}
+
+/**
+ * @public
+ *
+ * Same as {@see setImmediate} but could not be aborted.
+ *
+ * @param callback - The callback to call at the end of the event loop.
+ */
+function nextTick(callback) {
+    setImmediate(callback);
 }
 
 /**
@@ -1616,4 +1684,4 @@ function whilst(test, task) {
     }
 }
 
-export { PriorityQueue, PriorityTaskQueue, ProgressPromise, Queue, QueueError, TaskQueue, apply, applyEach, applyEachSeries, applyOn, cbpromisify, compose, concat, concatSeries, defer, denodify, dir, doUntil, doWhilst, each, eachLimit, eachSeries, every, exec, execOn, filter, filterSeries, find, findSeries, each as forEach, eachLimit as forEachLimit, eachSeries as forEachSeries, forever, immediate, log, map, mapLimit, mapSeries, memoize, nextTick, parallel, parallelLimit, partial, partialOn, promisify, reduce, reduceRight, reject, rejectSeries, resolve, retry, seq, series, some, sortBy, tap, tapOn, timeout, times, timesSeries, uncallbackify, until, waterfall, whilst };
+export { PriorityQueue, PriorityTaskQueue, ProgressPromise, Queue, QueueError, TaskQueue, apply, applyEach, applyEachSeries, applyOn, cbpromisify, clearImmediate, compose, concat, concatSeries, defer, denodify, dir, doUntil, doWhilst, each, eachLimit, eachSeries, every, exec, execOn, filter, filterSeries, find, findSeries, each as forEach, eachLimit as forEachLimit, eachSeries as forEachSeries, forever, immediate, log, map, mapLimit, mapSeries, memoize, nextTick, parallel, parallelLimit, partial, partialOn, promisify, reduce, reduceRight, reject, rejectSeries, resolve, retry, seq, series, setImmediate, some, sortBy, tap, tapOn, timeout, times, timesSeries, uncallbackify, until, waterfall, whilst };

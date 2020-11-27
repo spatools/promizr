@@ -2,12 +2,23 @@
 
 [Home](./index.md) &gt; [promizr](./promizr.md) &gt; [nextTick](./promizr.nexttick.md)
 
-## nextTick variable
+## nextTick() function
 
-Use the best next tick function depending on platform.
+Same as  but could not be aborted.
 
 <b>Signature:</b>
 
 ```typescript
-nextTick: (cb: NextTickCallback) => void
+export default function nextTick(callback: () => void): void;
 ```
+
+## Parameters
+
+|  Parameter | Type | Description |
+|  --- | --- | --- |
+|  callback | () =&gt; void | The callback to call at the end of the event loop. |
+
+<b>Returns:</b>
+
+void
+
