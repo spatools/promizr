@@ -60,6 +60,7 @@ export { default as resolve } from "./lib/resolve";
 export { default as retry } from "./lib/retry";
 export { default as seq } from "./lib/seq";
 export { default as series } from "./lib/series";
+export { setImmediate, clearImmediate } from "./lib/setImmediate";
 export { default as some } from "./lib/some";
 export { default as sortBy } from "./lib/sortBy";
 export { default as tap } from "./lib/tap";

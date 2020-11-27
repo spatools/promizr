@@ -1,14 +1,12 @@
 jest.useFakeTimers();
 
-import nextTick from "../lib/nextTick";
+import { setImmediate as pSetImmediate } from "../lib/setImmediate";
 
-describe("promizr.nextTick()", () => {
+describe("promizr.setImmediate()", () => {
 
-    test("should return a Promise that resolves on next tick", () => {
+    test("should return call setImmediate on NodeJS", () => {
         const callback = jest.fn();
-        const res = nextTick(callback);
-
-        expect(res).toBeUndefined();
+        pSetImmediate(callback);
 
         expect(setImmediate).toHaveBeenCalledTimes(1);
         expect(setImmediate).toHaveBeenCalledWith(callback);

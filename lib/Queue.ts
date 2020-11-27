@@ -2,7 +2,7 @@ import type { Deferred, QueueOptions } from "./_types";
 
 import QueueError from "./QueueError";
 
-import nextTick from "./nextTick";
+import { setImmediate } from "./setImmediate";
 import defer from "./defer";
 import exec from "./exec";
 
@@ -191,7 +191,7 @@ export default class Queue<T, U> {
         }
 
         this.workers += 1;
-        nextTick(this.createItemProcess(item));
+        setImmediate(this.createItemProcess(item));
     }
 
     private createItemProcess(item: QueueItem<T, U>): () => void {

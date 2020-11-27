@@ -1,7 +1,7 @@
 import * as path from "path";
 import { promises as fs } from "fs";
 
-import * as promizr from "../";
+import * as promizr from "../index";
 
 const LIB_DIR = path.join(__dirname, "..", "lib");
 

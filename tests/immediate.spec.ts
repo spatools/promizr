@@ -1,6 +1,6 @@
-import immediate from "../lib/immediate";
-
 jest.useFakeTimers();
+
+import immediate from "../lib/immediate";
 
 describe("promizr.immediate()", () => {
 
